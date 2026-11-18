@@ -26,6 +26,7 @@ include(":core:fs-fat")        // leitor FAT12/16/32
 include(":core:fs-exfat")      // formatador + leitor exFAT
 include(":core:iso")           // leitor ISO9660/Joliet/El Torito/UDF (identificação de imagens)
 include(":core:fs-ext")        // formatador ext2/ext3 (arquivos de persistência do Ventoy)
+include(":core:wim")           // divisão de install.wim em .swm (Windows em FAT32)
 include(":feature:ventoy-config") // ventoy.json: esquema, validação, edição e backups
 include(":feature:ventoy-core")// detecção, instalação e atualização do Ventoy
 
