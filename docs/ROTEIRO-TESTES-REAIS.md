@@ -15,7 +15,7 @@ Anote os resultados na tabela do final e me envie (ou cole no `docs/ACOMPANHAMEN
 
 ## Instalação do app
 
-1. Copie o arquivo `BootForge-0.3.0.apk` para o celular.
+1. Copie o arquivo `BootForge-0.4.0.apk` para o celular.
 2. Toque nele e permita "instalar apps desconhecidos" para o gerenciador de arquivos.
 3. Abra o **BootForge**.
 
@@ -111,6 +111,22 @@ Use o pendrive com Ventoy do passo 4. Abra **Ventoy** na tela inicial — aparec
 
 *Tempo de referência:* anote quanto levou a gravação + verificação da ISO do Windows (ela tem ~5–7 GB).
 
+## Etapa 5 — Editor de ISO (passos 28 a 34)
+
+> Estes passos **não apagam nada**: a ISO original nunca é alterada; o app gera uma nova.
+
+| Passo | Onde | O que fazer | Esperado |
+|---|---|---|---|
+| 28 | Tela inicial → **Editor de ISO** | *Abrir ISO* → uma ISO Linux (ex.: Ubuntu, Mint) | Mostra formato (ex.: "ISO9660 + Rock Ridge + Joliet · El Torito · híbrida"), arquivos, pastas e imagens de boot |
+| 29 | Mesma tela | Navegue até `/boot/grub/grub.cfg` → toque → mude o texto de um `menuentry` → *Salvar* | Selo **Novo**; chip "1 alteração" |
+| 30 | Mesma tela | *Nova pasta* "BootForge" → *Adicionar arquivos* (uma foto) → renomeie, mova e exclua algo → **Desfazer** e **Refazer** | Lista e chip de alterações acompanham; histórico no chip |
+| 31 | Mesma tela | *Gerar ISO* → **Preservar inicialização** → *Escolher onde salvar* | Progresso real; no fim, "ISO gerada e validada" com todas as conferências ✓ |
+| 32 | PC | Grave a nova ISO (Etapa 3, modo DD) ou copie para o Ventoy e inicie | Aparece o menu com o texto que você editou; o sistema inicia normalmente |
+| 33 | Editor | *Extrair tudo* (ou selecione itens → *Extrair*) para uma pasta do celular | Arquivos aparecem na pasta escolhida |
+| 34 | Editor | Abra uma **ISO do Windows** → adicione um arquivo em `/sources` → *Gerar ISO* (**Reconstrução completa**) | Validação ✓ (inclui "UDF" e "Âncoras UDF"); no PC em UEFI o instalador abre |
+
+*Tempo de referência:* anote quanto levou para gerar + validar (passo 31).
+
 ## Tabela de resultados
 
 | Item | Resultado (OK / falhou + mensagem) |
@@ -134,3 +150,7 @@ Use o pendrive com Ventoy do passo 4. Abra **Ventoy** na tela inicial — aparec
 | 23–24. ISO Linux em DD + boot | |
 | 25–26. Windows FAT32 (tempo: ___ min) + instalador abre | |
 | 27. Aviso em modo BIOS | |
+| 28–30. Editor: abrir, editar, desfazer | |
+| 31–32. Nova ISO validada e iniciando no PC (tempo: ___ min) | |
+| 33. Extração | |
+| 34. Windows reconstruída + instalador abre | |

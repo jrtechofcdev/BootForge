@@ -24,9 +24,9 @@ tasks.test {
     environment("LC_ALL", "C.UTF-8")
     environment("LANG", "C.UTF-8")
     useJUnitPlatform()
-    // Teste exploratório (ExploreTest): parâmetros por variável de ambiente, declarados como
-    // entrada para o cache do Gradle não reaproveitar um resultado antigo.
-    listOf("BF_ISO", "BF_OUT", "BF_MODE", "BF_EDITS", "BOOTFORGE_ALPINE_ISO").forEach { k ->
+    // Teste opcional com a ISO real do Alpine (BOOTFORGE_ALPINE_ISO=/caminho/alpine.iso), declarado
+    // como entrada para o cache do Gradle não reaproveitar um resultado antigo.
+    listOf("BOOTFORGE_ALPINE_ISO").forEach { k ->
         val v = System.getenv(k) ?: ""
         inputs.property(k, v)
         environment(k, v)

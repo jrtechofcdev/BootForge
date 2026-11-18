@@ -54,9 +54,9 @@ object IsoValidator {
         }
         checks += Check(true, "Leitura da nova ISO", out.formatLabel)
         checks += Check(out.volumeSpaceSectors * 2048 <= output.size, "Tamanho do volume ISO9660", "${out.volumeSpaceSectors} setores")
-        checks += Check(!plan.hasJoliet || out.joliet != null, "Joliet (nomes para Windows)", if (out.joliet != null) "presente" else "ausente")
-        checks += Check(!plan.hasRockRidge || out.hasRockRidge, "Rock Ridge (nomes e permissões Linux)", if (out.hasRockRidge) "presente" else "ausente")
-        checks += Check(!plan.hasUdf || out.hasUdf, "UDF", if (out.hasUdf) "presente" else "ausente")
+        if (plan.hasJoliet) checks += Check(out.joliet != null, "Joliet (nomes para Windows)", if (out.joliet != null) "presente" else "ausente")
+        if (plan.hasRockRidge) checks += Check(out.hasRockRidge, "Rock Ridge (nomes e permissões Linux)", if (out.hasRockRidge) "presente" else "ausente")
+        if (plan.hasUdf) checks += Check(out.hasUdf, "UDF (sistema de arquivos do Windows)", if (out.hasUdf) "presente" else "ausente")
         checks += pathTables(out)
 
         // árvores: a "principal" (UDF ou Rock Ridge) tem de ter exatamente os mesmos caminhos

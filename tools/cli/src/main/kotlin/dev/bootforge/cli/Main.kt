@@ -79,7 +79,7 @@ private fun run(args: Array<String>) {
             val r = VentoyUpdater(VentoyPackage.fromDirectory(ventoyDir)).update(dev, dev.sizeBytes, observer = ConsoleObserver)
             println("\nAtualizado: ${r.fromVersion} → ${r.toVersion}")
         }
-        else -> if (!isoCommand(cmd, file, args) && !fsCommand(cmd, file, args)) usage()
+        else -> if (!isoCommand(cmd, file, args) && !isoEditCommand(cmd, file, args) && !fsCommand(cmd, file, args)) usage()
     }
 }
 
@@ -111,6 +111,14 @@ private fun usage(): Nothing {
         Gravação de ISOs (Etapa 3):
           bootforge-cli iso-analyze <arquivo.iso>
           bootforge-cli iso-write   <arquivo.iso> <destino.img> [--method dd|windows|extract] [--gpt] [--no-verify]
+
+        Editor de ISO (Etapa 5):
+          bootforge-cli iso-info    <arquivo.iso>
+          bootforge-cli iso-ls      <arquivo.iso> [/pasta]
+          bootforge-cli iso-extract <arquivo.iso> <pasta-destino> [/caminho ...]
+          bootforge-cli iso-rebuild <arquivo.iso> <nova.iso> [--full] [--label NOME]
+                        [--put local:/destino] [--text /caminho=arquivo] [--rm /caminho]
+                        [--mkdir /pasta] [--mv /item:/pasta] [--ren /item:novo-nome]
 
         Arquivos na partição de dados (Ventoy) ou em imagem exFAT:
           bootforge-cli ls    <imagem.img> [/pasta]

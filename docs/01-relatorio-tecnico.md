@@ -126,17 +126,24 @@ O app **analisa** cada ISO, recomenda o método e mostra os motivos quando um m�
 
 ---
 
-## 6. Bibliotecas para manipulação de ISO (Etapa 5)
+## 6. Bibliotecas para manipulação de ISO (Etapa 5 — decisão tomada)
 
-| Opção | Licença | Uso pretendido | Observação |
-|---|---|---|---|
-| Leitor ISO9660/Joliet/El Torito próprio (Kotlin) | GPLv3 (nosso) | Explorar/extrair | Formato simples e bem documentado (ECMA-119) |
-| **xorriso / libisofs / libisoburn** (NDK) | GPLv2+/GPLv3 | Reconstruir preservando El Torito, MBR/GPT híbridos (`-boot_image any replay`) | Referência do mercado para reconstrução de ISOs Linux inicializáveis |
-| UDF (leitura) próprio | GPLv3 | Abrir ISOs do Windows | Leitura viável; escrita UDF não tem biblioteca Java madura |
-| `wimlib` (NDK) | LGPLv3/GPLv3 | Dividir `install.wim` | Para Windows em FAT32 |
+| Opção avaliada | Licença | Decisão |
+|---|---|---|
+| Leitor/gravador ISO9660 + Joliet + Rock Ridge + El Torito **próprio** (Kotlin) | GPLv3 (nosso) | ✅ **Adotado.** Roda igual no celular e no PC, sem NDK |
+| UDF 1.02 (leitura e **escrita**) **próprio** | GPLv3 (nosso) | ✅ **Adotado** para ISOs do Windows; validado com `udfinfo` e com o driver UDF do kernel Linux |
+| xorriso / libisofs (NDK) | GPLv2+/GPLv3 | Não usado no app: serviu de **referência e validador** nos testes (`-report_el_torito`, `-report_system_area`, `osirrox`) |
+| wimlib (NDK) | LGPLv3/GPLv3 | Não usado no app (divisor .swm próprio); usado como validador nos testes |
 
-Regra que será seguida: **uma ISO reconstruída só será apresentada como inicializável depois de
-validar** El Torito, imagens de boot BIOS/UEFI e, quando houver, a tabela híbrida.
+Como a reconstrução preserva a inicialização: no modo **Preservar**, os dados dos arquivos não
+modificados ficam nos mesmos setores, então catálogo El Torito, código isohybrid/GRUB2 do MBR,
+partições MBR/GPT e boot-info-tables continuam válidos; só o que muda de tamanho/posição é
+corrigido (volume, partição que cobre a ISO, cópia do GPT no fim, imagem de boot substituída).
+No modo **Reconstrução completa**, o catálogo é recriado com as imagens de boot originais
+(inclusive ocultas) e as tabelas internas são recalculadas.
+
+Regra seguida: **uma ISO reconstruída só é apresentada como inicializável depois de validar**
+El Torito, imagens de boot BIOS/UEFI e, quando houver, a tabela híbrida.
 
 ---
 

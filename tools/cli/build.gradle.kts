@@ -16,6 +16,7 @@ kotlin {
 dependencies {
     implementation(project(":feature:ventoy-core"))
     implementation(project(":feature:iso-writer"))
+    implementation(project(":feature:iso-editor"))
 }
 
 application {

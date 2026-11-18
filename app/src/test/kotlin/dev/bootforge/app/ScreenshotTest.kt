@@ -18,6 +18,19 @@ import dev.bootforge.app.ui.ImageFile
 import dev.bootforge.app.data.OperationState
 import dev.bootforge.app.ui.screens.DriveDetails
 import dev.bootforge.app.ui.screens.HomeContent
+import dev.bootforge.app.ui.screens.IsoEditorActions
+import dev.bootforge.app.ui.screens.IsoEditorContent
+import dev.bootforge.app.ui.EditorItem
+import dev.bootforge.app.ui.EditorUi
+import dev.bootforge.app.ui.SourceSummary
+import dev.bootforge.isoedit.BytesContent
+import dev.bootforge.isoedit.EditSession
+import dev.bootforge.isoedit.IsoBuilder
+import dev.bootforge.isoedit.IsoSource as EditableIso
+import dev.bootforge.isoedit.Paths
+import dev.bootforge.isoedit.Source
+import dev.bootforge.isoedit.VDir
+import dev.bootforge.isoedit.VFile
 import dev.bootforge.app.ui.screens.IsoWriterActions
 import dev.bootforge.app.ui.screens.IsoWriterContent
 import dev.bootforge.app.ui.IsoSource
@@ -101,6 +114,39 @@ class ScreenshotTest {
         paparazzi.snapshot {
             Screen { IsoWriterContent(ui, listOf(usb), report, InspectState.Ready(report), IsoWriterActions()) }
         }
+    }
+
+    /** Editor de ISO com uma imagem REAL do grub-mkrescue aberta pelo motor e duas edições pendentes. */
+    @Test
+    fun isoEditor() {
+        val work = File.createTempFile("shot-ed", "").apply { delete(); mkdirs() }
+        File(work, "t/boot/grub").mkdirs()
+        File(work, "t/boot/grub/grub.cfg").writeText("set timeout=5\nmenuentry \"Linux\" { linux /vmlinuz }\n")
+        File(work, "t/casper").mkdirs(); File(work, "t/casper/filesystem.squashfs").writeBytes(ByteArray(300_000))
+        File(work, "t/README.diskdefines").writeText("#define DISKNAME Exemplo")
+        val iso = File(work, "ubuntu-exemplo.iso")
+        ProcessBuilder("grub-mkrescue", "-o", iso.path, File(work, "t").path).redirectErrorStream(true).start().apply { inputStream.readBytes(); waitFor() }
+        val ui = RandomReader.of(iso).use { r ->
+            val src = EditableIso.open(r)
+            val s = EditSession(src)
+            s.replaceText("/boot/grub/grub.cfg", "set timeout=10\n")
+            s.addFile("/", "LEIA-ME.txt", BytesContent("BootForge".toByteArray(), "LEIA-ME.txt"))
+            val boots = src.bootImages.mapNotNull { it.path }.toSet()
+            val items = s.root.children.map { n ->
+                val p = Paths.join("/", n.name)
+                when (n) {
+                    is VDir -> EditorItem(n.name, p, true, 0, false, false, false, n.children.size)
+                    is VFile -> EditorItem(n.name, p, false, n.size, n.source is Source.External, p in boots, false, 0)
+                }
+            }.sortedWith(compareBy({ !it.isDir }, { it.name.lowercase() }))
+            EditorUi(
+                summary = SourceSummary(iso.name, r.size, src.formatLabel, src.volumeId, Paths.countFiles(src.root), Paths.countDirs(src.root),
+                    src.bootImages.map { "${it.entry.platformName}: ${it.path}" }, src.isHybrid, IsoBuilder.availability(src), IsoBuilder.recommended(src), src.warnings, src.blockers),
+                items = items, history = s.history, canUndo = true, pending = s.pendingChanges(),
+            )
+        }
+        work.deleteRecursively()
+        paparazzi.snapshot { Screen { IsoEditorContent(ui, IsoEditorActions()) } }
     }
 
     @Test

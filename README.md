@@ -7,7 +7,7 @@ via USB OTG, sem root e sem computador**.
 
 ![Telas do BootForge](docs/img/app-telas.png)
 
-> **Estado atual: 0.3.0 — Etapas 1, 2, 3 (gravação de ISOs) e 4 (Ventoy completo) de 7.**
+> **Estado atual: 0.4.0 — Etapas 1 a 5 de 7 (gravação de ISOs, Ventoy completo e editor de ISO).**
 > Tudo validado em discos virtuais com boot real no QEMU (BIOS e UEFI) e comparado com as
 > ferramentas oficiais do Ventoy. **Ainda não testado em celular real** — veja o
 > [roteiro de testes](docs/ROTEIRO-TESTES-REAIS.md). Status completo em
@@ -21,6 +21,11 @@ via USB OTG, sem root e sem computador**.
   em FAT32 com o `install.wim` > 4 GB dividido em `.swm` (método oficial da Microsoft); outras ISOs
   UEFI extraídas para FAT32; MBR ou GPT; verificação SHA-256 por releitura. O app explica por que
   cada método está disponível ou não.
+- ✏️ **Editor de ISO** não destrutivo: explorar, pesquisar, ver/editar textos (ex.: `grub.cfg`),
+  adicionar, substituir, renomear, mover e excluir, com desfazer/refazer. Gera uma **nova** ISO em
+  dois modos — *Preservar inicialização* (mantém El Torito, MBR/GPT híbridos e carregadores no lugar)
+  ou *Reconstrução completa* (ISO9660 + Joliet + Rock Ridge + **UDF** para o Windows) — e valida a
+  ISO gerada relendo tudo. Também extrai arquivos e pastas.
 - 🚀 **Ventoy 1.1.18**: detecção automática (mesmas regras do oficial), instalação real (MBR ou GPT,
   alinhamento 4K, espaço reservado, Secure Boot) e atualização **sem apagar as ISOs**.
 - 🗂️ **Gerenciador de arquivos** da partição do Ventoy: copiar do/para o celular, mover, renomear,
@@ -47,6 +52,8 @@ Módulos ainda não implementados aparecem **bloqueados** na tela inicial com a 
 | Tema aplicado pelo app | GPT + UEFI |
 | ![Extração FAT32 em UEFI](docs/img/e3-ext-mbr-uefi.png) | ![DD em BIOS](docs/img/e3-dd-bios.png) |
 | Etapa 3: ISO extraída para FAT32 dando boot em UEFI | Etapa 3: ISO híbrida gravada em DD (BIOS) |
+| ![Alpine editado](docs/img/e5-alpine-editada-login.png) | ![4 modos](docs/img/e5-preservar-4-modos.png) |
+| Etapa 5: ISO real do Alpine editada pelo app, iniciando até o login | Etapa 5: a mesma ISO editada em pendrive e CD, BIOS e UEFI |
 
 ## Estrutura de pastas
 
@@ -71,6 +78,7 @@ BootForge/
 │   ├── iso/                ISO9660/Joliet/Rock Ridge/El Torito/UDF + identificação
 │   └── integrity/          SHA-256/512
 ├── feature/iso-writer/     Etapa 3: análise da ISO e gravação (DD, Windows FAT32, extração)
+├── feature/iso-editor/     Etapa 5: edição não destrutiva, reconstrução (ISO9660/Joliet/RR/UDF) e validação
 ├── feature/ventoy-core/    instalar, detectar, atualizar, catálogo, temas, ferramentas, download
 ├── feature/ventoy-config/  ventoy.json: esquema oficial, validação, edição
 ├── tools/cli/              ferramenta de linha de comando (testes com arquivos .img)
@@ -114,6 +122,8 @@ $CLI check   teste.img                                # verificar instalação
 $CLI secureboot teste.img off                         # e mais: json, control, theme, persist, isoinfo
 $CLI iso-analyze minha.iso                            # Etapa 3: qual método usar e por quê
 $CLI iso-write   minha.iso teste.img [--gpt]           # grava a ISO no pendrive virtual
+$CLI iso-info    minha.iso                            # Etapa 5: formato, boot e modos de reconstrução
+$CLI iso-rebuild minha.iso nova.iso --text /boot/grub/grub.cfg=meu.cfg --mkdir /extras
 ```
 
 Para testar o boot no Linux: `tools/scripts/qemu-screenshot.sh teste.img uefi tela.ppm`.

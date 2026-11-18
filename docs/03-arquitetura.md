@@ -76,11 +76,24 @@ Independências pedidas pelo prompt:
 Ordem de gravação nos métodos FAT32: apaga início/fim do disco → cria o FAT32 e copia → grava a
 tabela de partições por último → relê e confere o SHA-256 de cada arquivo.
 
+## Módulos adicionados na Etapa 5
+
+| Módulo | Conteúdo |
+|---|---|
+| `feature:iso-editor` | `IsoSource` (abre a ISO: descritores, Rock Ridge/SUSP com CE, Joliet, UDF, El Torito, MBR/GPT), `EditSession` (árvore imutável `VDir/VFile`, desfazer/refazer, alterações pendentes), `IsoBuilder` (modos Preservar e Completo), `DirTreeWriter` (pastas, nomes ISO9660/Joliet, tabelas de caminho), `UdfWriter` (UDF 1.02), `ImageLayout` (gravação sequencial por "pedaços"), `IsoValidator`, `IsoExtractor` |
+| `app` | `IsoEditorViewModel`, `IsoEditorScreen` |
+
+Por que a árvore é imutável: cada operação gera uma raiz nova reaproveitando os ramos que não
+mudaram; desfazer/refazer é só trocar de raiz, e a imagem original nunca é tocada.
+
+Por que a gravação é sequencial: a nova ISO é descrita como uma lista de pedaços em posições
+fixas (cópias do original com correções, bytes gerados, dados de arquivos). Isso permite gravar
+direto num arquivo do celular (o Android não dá acesso aleatório a todo destino).
+
 ## Módulos futuros previstos
 
 | Módulo | Etapa | Conteúdo |
 |---|---|---|
-| `core:iso` + `feature:iso-editor` | 5 | ISO9660/Joliet/UDF, edição não destrutiva, reconstrução |
 | `feature:catalog`, `feature:downloads` | 6 | metadados oficiais centralizados (JSON atualizável), downloads com retomada, checksums |
 
 ## Dependências

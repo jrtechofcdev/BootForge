@@ -49,8 +49,8 @@ android {
         applicationId = "dev.bootforge.app"
         minSdk = 26          // Android 8.0
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.3.0"
+        versionCode = 4
+        versionName = "0.4.0"
     }
 
     buildTypes {
@@ -88,6 +88,7 @@ dependencies {
     implementation(project(":android:usb"))
     implementation(project(":feature:ventoy-core"))
     implementation(project(":feature:iso-writer"))
+    implementation(project(":feature:iso-editor"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

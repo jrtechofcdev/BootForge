@@ -1,6 +1,6 @@
 # Documento de acompanhamento — BootForge
 
-Última atualização: 18/11/2026 · Versão do app: **0.3.0**
+Última atualização: 18/11/2026 · Versão do app: **0.4.0**
 
 Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular real · 🟡 pendente · ⛔ limitação técnica
 
@@ -12,7 +12,7 @@ Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular
 | 2 | Estrutura principal (app, USB, telas) | ✅ Concluída (🧪 falta teste no celular) |
 | 3 | Gravação inteligente de ISOs | ✅ Concluída no núcleo e na interface (🧪 falta teste no celular) |
 | 4 | Ventoy completo | ✅ Concluída no núcleo e na interface (🧪 falta teste no celular) |
-| 5 | Editor de ISO | 🟡 Pendente (leitor ISO9660/Joliet/Rock Ridge já pronto em `core/iso`) |
+| 5 | Editor de ISO | ✅ Concluída no núcleo e na interface (🧪 falta teste no celular) |
 | 6 | Catálogo e downloads | 🟡 Pendente (download verificado já usado para o Ventoy) |
 | 7 | Testes e estabilidade | 🟡 Pendente |
 
@@ -33,6 +33,12 @@ Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular
 | **Extrair para FAT32 (UEFI)** — ISOs não híbridas com `efi/boot` | ✅ | QEMU UEFI com MBR e GPT: o GRUB da ISO encontrou a partição (`docs/img/e3-ext-*.png`) |
 | Gerador FAT32 (nomes longos, arquivos contíguos, FSInfo, cópia do setor de boot) | ✅ | `fsck.fat`, `mtools` |
 | Divisor de WIM (.swm, sem recompactar) e leitor UDF | ✅ | `wimlib-imagex verify/apply`; UDF do `genisoimage` |
+| **Editor de ISO — abrir e explorar**: ISO9660, Joliet, Rock Ridge (com continuação CE), UDF, El Torito (imagens visíveis e ocultas), MBR/GPT híbridos | ✅ | ISOs do `grub-mkrescue`, `genisoimage -udf` e **ISO real do Alpine 3.20** |
+| **Edição não destrutiva**: adicionar arquivos/pastas, substituir, editar texto, renomear, mover, copiar, excluir, criar pastas; desfazer/refazer ilimitados; histórico; alterações pendentes | ✅ | Testes da sessão |
+| **Modo Preservar inicialização** (dados não modificados ficam no lugar; corrige descritores, catálogo, MBR com CHS, código isohybrid/GRUB2, GPT + cópia no fim, boot-info-table e grub2-boot-info) | ✅ | `isovfy` sem erros; `xorriso` reconhece El Torito/MBR/GPT; **QEMU: pendrive e CD × BIOS e UEFI**; Alpine editado iniciou até o **login** |
+| **Reconstrução completa** (ISO9660 + Joliet + Rock Ridge + **UDF 1.02** + El Torito) | ✅ | `isovfy`, `udfinfo`; **driver UDF do kernel Linux** montou a ISO e o SHA-256 de todos os arquivos conferiu; QEMU (CD BIOS até o login, UEFI) |
+| **Validação da ISO gerada** (árvores, SHA-256 de cada arquivo, tabelas de caminho, El Torito, imagens de boot, MBR/GPT, âncoras UDF) | ✅ | Pegou um erro real durante o desenvolvimento (ordem do grub2-boot-info) |
+| Extração (tudo ou seleção) e cópia da ISO original | ✅ | Testes + CLI |
 | Ventoy: instalar (MBR/GPT, 4K, reserva, **com ou sem Secure Boot**), detectar, atualizar | ✅ | Boot QEMU BIOS/UEFI; comparação com o instalador oficial |
 | Catálogo de imagens com as regras oficiais do menu | ✅ | `.ventoyignore`, 32 KiB, lixeiras, `._`, pasta de busca, profundidade, FILE_FLT, wim/vhd, listas branca/negra |
 | `ventoy.json`: esquema dos 15 plugins e 25 opções, validação, backups, restauração | ✅ | Exemplo oficial; menu do QEMU mostrou apelido e contagem configurados |
@@ -56,6 +62,7 @@ Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular
 | Ferramentas: verificar, Secure Boot, backup/restauração, persistência | 🧪 |
 | Atualizações: embutida, consulta/baixa do GitHub, atualizar com pacote baixado | 🧪 |
 | **Gravar ISO**: escolher a ISO (sem copiar), análise, método recomendado e alternativas com motivos, MBR/GPT, verificação opcional, pendrive de destino com confirmação APAGAR | 🧪 (captura ✅) |
+| **Editor de ISO**: abrir do celular/pendrive (seletor do Android), navegar, pesquisar, seleção múltipla, ver/editar texto, visualizador hexadecimal, propriedades, adicionar/substituir/renomear/mover/copiar/excluir, desfazer/refazer, alterações pendentes, gerar nova ISO (2 modos) com validação, extrair, copiar original, excluir original só após confirmação | 🧪 (captura ✅) |
 | Diagnóstico (Etapas 1–2): teste de leitura, gravação RAW + verificação, setor 0 | 🧪 |
 
 ## 2. Pendências
@@ -64,7 +71,7 @@ Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular
 |---|---|
 | 3 (restos) | Windows em modo BIOS/Legacy direto (hoje: via Ventoy); NTFS + UEFI:NTFS para `install.esd` > 4 GB; ajuste automático de rótulos (CDLABEL) ao extrair Linux |
 | 4 (restos) | ext4/xfs/criptografia na persistência; VentoyVlnk; plugins com sufixo de arquitetura no editor visual (hoje: modo Avançado); pré-visualização com 9-slice completo |
-| 5 | Editor de ISO: extração, edição não destrutiva, reconstrução preservando El Torito e híbrido |
+| 5 (restos) | Recriar a tabela híbrida também na reconstrução completa; editar ISOs com `rr_moved` (pastas muito profundas); salvar a sessão para continuar depois de fechar o app |
 | 6 | Catálogo de sistemas, downloads com retomada e checksum |
 | 7 | Matriz de celulares × pendrives; driver SCSI próprio (READ(16), várias LUNs) |
 
@@ -82,6 +89,10 @@ Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular
 | Windows gravado em FAT32 | Inicia só em **UEFI** (todo PC com Windows 8+). Para BIOS/Legacy, usar o Ventoy |
 | `install.esd` > 4 GB | Compressão "sólida": não dá para dividir sem recompactar → usar o Ventoy (a ISO fica inteira no exFAT) |
 | ISO na nuvem | O arquivo precisa estar no armazenamento do celular (leitura direta, sem cópia) |
+| Editor: reconstrução completa | Não recria MBR/GPT híbrido (a ISO funciona em DVD, Ventoy e gravação por extração). Para manter, usar o modo Preservar |
+| Editor: modo Preservar | Arquivos removidos/substituídos continuam ocupando espaço dentro da ISO (é o que garante a inicialização) |
+| Editor: mapa Apple (APM) | Não é atualizado (afeta só Macs muito antigos) |
+| Editor: ISOs do Windows | Só a reconstrução completa (UDF). Boot de um instalador real do Windows ainda não testado (não há ISO da Microsoft no ambiente de desenvolvimento) |
 
 ## 4. Dependências
 
@@ -91,7 +102,9 @@ Ver [`03-arquitetura.md`](03-arquitetura.md#dependências) e [`THIRD_PARTY_LICEN
 
 | Teste | Resultado |
 |---|---|
-| `./gradlew test` + capturas — 78 execuções | ✅ 0 falhas |
+| `./gradlew test` + capturas — 87 execuções (inclui a ISO real do Alpine nos 2 modos) | ✅ 0 falhas |
+| Etapa 5 no QEMU: Alpine editado (Preservar) como pendrive e CD em BIOS e UEFI; boot completo até o login; reconstrução completa como CD até o login; imagem de boot realocada iniciando pelo MBR GRUB2 e pelo El Torito | ✅ (`docs/img/e5-*.png`) |
+| Etapa 5: ISO UDF reconstruída montada pelo driver UDF do kernel Linux (SHA-256 de 246 arquivos; diferenças só nas edições) | ✅ (`docs/img/e5-udf-linux-kernel.log`) |
 | Etapa 3 no QEMU: DD em BIOS e UEFI; extração FAT32 em UEFI com MBR e com GPT; mídia FAT32 em BIOS mostra aviso | ✅ (`docs/img/e3-*.png`) |
 | Etapa 3: Windows FAT32 com install.wim dividido → `wimlib verify` e `apply` idênticos ao original | ✅ |
 | Instalador × `Ventoy2Disk.sh` oficial (layout, core.img) | ✅ idênticos |
@@ -101,13 +114,16 @@ Ver [`03-arquitetura.md`](03-arquitetura.md#dependências) e [`THIRD_PARTY_LICEN
 | QEMU: ISO real copiada pelo BootForge **deu boot** (GRUB da ISO) | ✅ (`docs/img/qemu-e4-iso-booted.png`) |
 | QEMU: apelido (`menu_alias`) e contagem (`VTOY_MENU_TIMEOUT`) gravados pelo BootForge | ✅ (`docs/img/qemu-e4-alias-menu.png`) |
 | QEMU: tema aplicado pelo BootForge | ✅ (`docs/img/qemu-e4-theme.png`) |
-| `assembleRelease` (R8) | ✅ APK 15,9 MB (0.3.0) |
+| `assembleRelease` (R8) | ✅ APK 16,0 MB (0.4.0) |
 | **Celular real** | ⏳ aguardando ([roteiro](ROTEIRO-TESTES-REAIS.md)) |
 
 ## 6. Problemas encontrados e resolvidos
 
 | Problema | Solução |
 |---|---|
+| boot-info-table inválida após mover a imagem de boot do GRUB | O grub2-boot-info fica dentro da área somada: aplicar primeiro o grub2-boot-info, depois a soma. O validador passou a conferir a soma |
+| Partição e tamanho perdiam o alinhamento de 1 MiB do isohybrid | Tamanho final arredondado e CHS recalculado com a geometria original (64/32) |
+| Alpine não monta ISO com UDF no boot UEFI | Limitação do initramfs do Alpine (a ISO original do genisoimage falha igual) — não é da reconstrução |
 | ISO do Windows: arquivos reais só existem no UDF (ISO9660 tem só um README) | Leitor UDF próprio (ECMA-167/OSTA) |
 | `install.wim` > 4 GB não cabe em FAT32 | Divisor .swm por cópia direta dos recursos (formato do DISM/wimlib), validado com o wimlib |
 | PC em modo BIOS ligado com mídia só-UEFI travava sem explicação | Código de boot próprio no MBR e no setor de boot mostra o aviso |
@@ -120,6 +136,6 @@ Ver [`03-arquitetura.md`](03-arquitetura.md#dependências) e [`THIRD_PARTY_LICEN
 
 ## 7. Próximas etapas
 
-1. **Você:** testar o APK 0.3.0 seguindo o [roteiro](ROTEIRO-TESTES-REAIS.md) (Etapas 2, 3 e 4).
+1. **Você:** testar o APK 0.4.0 seguindo o [roteiro](ROTEIRO-TESTES-REAIS.md) (Etapas 2 a 5).
 2. Corrigir o que aparecer no hardware real.
-3. Etapa 5 — Editor de ISO.
+3. Etapa 6 — Catálogo e downloads.
