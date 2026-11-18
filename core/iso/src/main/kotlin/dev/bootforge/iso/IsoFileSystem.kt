@@ -21,7 +21,40 @@ class IsoFileSystem private constructor(
     private val reader: RandomReader,
     val joliet: Boolean,
     private val root: IsoEntry,
-) {
+) : ImageTree {
+
+    override val formatName: String get() = if (joliet) "ISO9660 + Joliet" else "ISO9660"
+
+    /**
+     * Lista a pasta no formato comum. Arquivos > 4 GiB (ISO9660 nível 3) aparecem como vários
+     * registros seguidos com a flag "multi-extent": aqui eles são juntados em um único arquivo.
+     */
+    override fun listDir(path: String): List<TreeEntry> {
+        val out = mutableListOf<TreeEntry>()
+        var pending: MutableList<IsoEntry>? = null
+        for (e in list(path)) {
+            val group = pending
+            if (group != null) {
+                group += e
+                if (!e.multiExtent) { out += merge(group); pending = null }
+                continue
+            }
+            if (e.multiExtent && !e.isDirectory) { pending = mutableListOf(e); continue }
+            out += merge(listOf(e))
+        }
+        pending?.let { out += merge(it) }
+        return out
+    }
+
+    private fun merge(parts: List<IsoEntry>): TreeEntry {
+        val first = parts.first()
+        return TreeEntry(
+            first.name, first.isDirectory, parts.sumOf { it.size },
+            if (first.isDirectory) emptyList() else parts.map { Extent(it.extentLba * SECTOR, it.size) },
+        )
+    }
+
+    override fun open(entry: TreeEntry): java.io.InputStream = ExtentInputStream(reader, entry.extents, entry.size)
 
     fun list(path: String = "/"): List<IsoEntry> {
         val dir = if (path.trim('/').isEmpty()) root else (find(path) ?: throw IOException("Pasta não encontrada: $path"))
