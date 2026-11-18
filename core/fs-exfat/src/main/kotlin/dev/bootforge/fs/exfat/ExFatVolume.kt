@@ -3,6 +3,7 @@ package dev.bootforge.fs.exfat
 import dev.bootforge.blockdev.BlockDevice
 import dev.bootforge.blockdev.ProgressListener
 import dev.bootforge.blockdev.ProgressTracker
+import dev.bootforge.blockdev.RandomReader
 import dev.bootforge.blockdev.readBlocks
 import dev.bootforge.fs.exfat.ExFatEntries.u16
 import dev.bootforge.fs.exfat.ExFatEntries.u32
@@ -259,6 +260,30 @@ class ExFatVolume private constructor(private val dev: BlockDevice, val isWritab
         return clusterLba(runs[0].first) to (e.size + bytesPerSector - 1) / bytesPerSector
     }
 
+    /** Abre um arquivo para leitura em posição arbitrária (ex.: analisar uma ISO no pendrive). */
+    fun openReader(path: String): RandomReader {
+        val e = resolve(path) ?: throw IOException("Arquivo não encontrado: $path")
+        if (e.isDirectory) throw IOException("É uma pasta: $path")
+        val runs = toRuns(chainOrRun(e.firstCluster, e.contiguous, e.size))
+        return object : RandomReader {
+            override val size = e.size
+            private val cluster = ByteArray(clusterSize)
+            override fun read(position: Long, buffer: ByteArray, offset: Int, len: Int): Int {
+                if (position >= size) return -1
+                var idx = position / clusterSize
+                var c = -1L
+                for (r in runs) { val l = r.last - r.first + 1; if (idx < l) { c = r.first + idx; break }; idx -= l }
+                if (c < 0) throw IOException("Cadeia de clusters menor que o arquivo")
+                val inCluster = (position % clusterSize).toInt()
+                val n = minOf(len.toLong(), (clusterSize - inCluster).toLong(), size - position).toInt()
+                dev.read(clusterLba(c), cluster)
+                cluster.copyInto(buffer, offset, inCluster, inCluster + n)
+                return n
+            }
+            override fun close() = Unit
+        }
+    }
+
     /** Abre um arquivo para leitura sequencial. */
     fun openFile(path: String): InputStream {
         val e = resolve(path) ?: throw IOException("Arquivo não encontrado: $path")
@@ -451,6 +476,98 @@ class ExFatVolume private constructor(private val dev: BlockDevice, val isWritab
             e
         }
         FileWriteResult(entry, digest.digest().toHex(), runs.size)
+    }
+
+    /**
+     * Reserva um arquivo CONTÍGUO de [size] bytes sem regravar o conteúdo (como o `fallocate`).
+     * Usado para arquivos de persistência, que depois são formatados "por dentro".
+     * Com [zeroFill] = true o conteúdo é zerado (mais lento, mas não expõe dados antigos do pendrive).
+     */
+    fun createContiguousFile(
+        path: String, size: Long, zeroFill: Boolean,
+        listener: ProgressListener = ProgressListener.NONE, cancel: CancellationSignal = CancellationSignal.NONE,
+    ): ExFatEntry {
+        if (zeroFill) {
+            val zeros = object : InputStream() {
+                var left = size
+                override fun read(): Int = if (left-- > 0) 0 else -1
+                override fun read(b: ByteArray, off: Int, len: Int): Int {
+                    if (left <= 0) return -1
+                    val n = minOf(len.toLong(), left).toInt()
+                    b.fill(0, off, off + n)
+                    left -= n
+                    return n
+                }
+            }
+            return writeFile(path, zeros, size, requireContiguous = true, listener = listener, cancel = cancel).entry
+        }
+        return mutation {
+            val (parentPath, name) = splitParent(path)
+            ExFatEntries.validateName(name)
+            val parent = openDir(parentPath)
+            if (findIn(DirData(parent), name) != null) throw IOException("Já existe um item chamado \"$name\"")
+            val needed = (size + clusterSize - 1) / clusterSize
+            val runs = clusters.allocate(needed)
+            if (runs.size > 1) {
+                clusters.free(runs)
+                throw IOException("Não há espaço contíguo suficiente para o arquivo")
+            }
+            val now = System.currentTimeMillis()
+            insertSet(DirData(parent), ExFatEntries.SetData(name, ExFatEntries.ATTR_ARCHIVE, runs.firstOrNull()?.first ?: 0, size, size, true, now, now, now))
+        }
+    }
+
+    /** Resultado da verificação de consistência (somente leitura). */
+    data class CheckReport(val errors: List<String>, val warnings: List<String>, val files: Int, val directories: Int)
+
+    /**
+     * Verifica a consistência do volume SEM alterar nada: checksums da região de boot e dos
+     * conjuntos de entradas, NameHash, cadeias de clusters, clusters compartilhados entre arquivos,
+     * bitmap × clusters realmente usados e flag VolumeDirty.
+     */
+    fun checkConsistency(): CheckReport {
+        val errors = mutableListOf<String>()
+        val warnings = mutableListOf<String>()
+        if (!bootChecksumValid) errors += "Checksum da região de boot inválido"
+        if (dev.readBlocks(0, 1)[106].toInt() and 0x02 != 0) warnings += "Volume marcado como \"sujo\" (uma gravação anterior não terminou)"
+        val owner = HashMap<Long, String>()
+        var files = 0
+        var dirs = 0
+        fun own(list: List<Long>, who: String) {
+            for (c in list) {
+                if (c < 2 || c > clusterCount + 1) { errors += "$who: cluster $c fora do volume"; return }
+                owner.put(c, who)?.let { other -> errors += "Cluster $c usado por \"$who\" e \"$other\" (cruzado)" }
+                if (!clusters.isUsed(c)) errors += "$who: cluster $c em uso mas marcado como livre no bitmap"
+            }
+        }
+        own(chainOrRun(bitmapCluster, false, bitmapLength), "(bitmap)")
+        own(chainOrRun(upcaseCluster, false, upcaseLength), "(tabela up-case)")
+        own(chainOrRun(rootCluster, false, -1), "/")
+        fun visit(dirPath: String, handle: DirHandle, depth: Int) {
+            if (depth > 64) { errors += "$dirPath: profundidade excessiva (laço?)"; return }
+            val dir = DirData(handle)
+            val raw = dir.bytes
+            for (e in parseDirectory(dir)) {
+                val loc = e.location!!
+                val set = raw.copyOfRange(loc.offset, loc.offset + loc.count * 32)
+                val full = dirPath.trimEnd('/') + "/" + e.name
+                if (ExFatEntries.u16(set, 2) != ExFatEntries.setChecksum(set)) errors += "$full: checksum da entrada inválido"
+                if (ExFatEntries.u16(set, 36) != ExFatEntries.nameHash(e.name, upcase)) warnings += "$full: NameHash diferente do esperado"
+                val list = runCatching { chainOrRun(e.firstCluster, e.contiguous, e.size) }.getOrElse {
+                    errors += "$full: ${it.message}"; emptyList()
+                }
+                val expected = (e.size + clusterSize - 1) / clusterSize
+                if (e.isDirectory) { if (list.size.toLong() * clusterSize < e.size) errors += "$full: pasta menor que o tamanho declarado" }
+                else if (list.size.toLong() != expected) errors += "$full: ${list.size} clusters para ${e.size} bytes (esperado $expected)"
+                own(list, full)
+                if (e.isDirectory) { dirs++; visit(full, DirHandle(full, e), depth + 1) } else files++
+            }
+        }
+        visit("/", DirHandle("/", null), 0)
+        var lost = 0L
+        for (c in 2..clusterCount + 1) if (clusters.isUsed(c) && c !in owner) lost++
+        if (lost > 0) warnings += "$lost cluster(s) marcados como usados sem pertencer a nenhum arquivo (espaço perdido)"
+        return CheckReport(errors.distinct().take(200), warnings, files, dirs)
     }
 
     private fun writeData(
