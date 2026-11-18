@@ -29,6 +29,7 @@ include(":core:fs-ext")        // formatador ext2/ext3 (arquivos de persistênci
 include(":core:wim")           // divisão de install.wim em .swm (Windows em FAT32)
 include(":feature:ventoy-config") // ventoy.json: esquema, validação, edição e backups
 include(":feature:iso-writer")  // gravação de ISOs (DD, Windows FAT32, extração FAT32)
+include(":feature:iso-editor")  // editor de ISO: edição não destrutiva e reconstrução
 include(":feature:ventoy-core")// detecção, instalação e atualização do Ventoy
 
 // Android
