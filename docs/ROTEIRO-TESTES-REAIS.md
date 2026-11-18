@@ -15,7 +15,7 @@ Anote os resultados na tabela do final e me envie (ou cole no `docs/ACOMPANHAMEN
 
 ## Instalação do app
 
-1. Copie o arquivo `BootForge-0.1.0-poc.apk` para o celular.
+1. Copie o arquivo `BootForge-0.2.0.apk` para o celular.
 2. Toque nele e permita "instalar apps desconhecidos" para o gerenciador de arquivos.
 3. Abra o **BootForge**.
 
@@ -76,6 +76,27 @@ Anote os resultados na tabela do final e me envie (ou cole no `docs/ACOMPANHAMEN
 - Durante uma gravação, **desconecte** o pendrive → o app deve mostrar **"A operação FALHOU"** (nunca "concluído").
 - Toque em **Cancelar** durante uma gravação → deve mostrar "Operação cancelada".
 
+## Etapa 4 — Ventoy completo (APK 0.2.0)
+
+Use o pendrive com Ventoy do passo 4. Abra **Ventoy** na tela inicial — aparecem 8 abas.
+
+| # | Teste | Como fazer | Esperado |
+|---|---|---|---|
+| 9 | Arquivos | Aba **Arquivos** → ⋮ → *Copiar arquivos do celular* → escolha uma ISO | Notificação com progresso; ao fim, o arquivo aparece na pasta |
+| 10 | Cópia longa em segundo plano | Durante a cópia, bloqueie a tela ou troque de app | A cópia continua (notificação ativa) |
+| 11 | Pasta, renomear, mover, excluir | Crie uma pasta, recorte e cole um arquivo nela, renomeie, exclua | Tudo refletido na lista |
+| 12 | Para o celular / compartilhar | Selecione um arquivo → *Para o celular* e *Compartilhar* | Arquivo aparece no celular / abre o menu de compartilhar |
+| 13 | ISOs | Aba **ISOs** → toque numa ISO | Mostra o sistema (ex.: Ubuntu), boot BIOS/UEFI, "No menu" |
+| 14 | Integridade | *Verificar integridade* → cole o SHA-256 oficial da ISO | "SHA-256 CONFERE" |
+| 15 | Organizar | *Organizar em pastas* → confirme | ISOs movidas para /Linux, /Windows… |
+| 16 | ventoy.json | Aba **Configurações** → *Tempo do menu* = 10 → Salvar | No PC, o menu do Ventoy conta 10 s |
+| 17 | Tema | Aba **Temas** → *Copiar tema original* → Pré-visualizar → Aplicar | No PC, o menu usa o tema |
+| 18 | Verificar instalação | Aba **Ferramentas** → *Verificar agora* | Tudo ✓ |
+| 19 | Secure Boot | *Desligar* e depois *Ligar* | Em cada caso o PC continua dando boot; ISOs preservadas |
+| 20 | Backup | *Salvar backup (.zip)* → apague o ventoy.json → *Restaurar* | ventoy.json volta |
+| 21 | Persistência | *Criar arquivo de persistência* (Ubuntu, 4096 MiB, vincular à ISO Ubuntu) | No PC, a ISO Ubuntu pergunta/usa persistência e mantém alterações após reiniciar |
+| 22 | Atualizações | Aba **Atualizações** → *Consultar versões* → *Baixar* | Pacote "verificado"; *Atualizar o pendrive* mantém as ISOs |
+
 ## Tabela de resultados
 
 | Item | Resultado (OK / falhou + mensagem) |
@@ -90,3 +111,9 @@ Anote os resultados na tabela do final e me envie (ou cole no `docs/ACOMPANHAMEN
 | 6. Atualização preserva arquivos | |
 | 7. Gravação RAW + boot | |
 | 8. Desconexão / cancelamento tratados | |
+| 9–12. Arquivos (cópia, segundo plano, organizar, compartilhar) | |
+| 13–15. ISOs (identificação, integridade, organizar) | |
+| 16–17. ventoy.json e tema refletidos no PC | |
+| 18–20. Verificar, Secure Boot, backup | |
+| 21. Persistência funcionando na distro | |
+| 22. Atualização online | |

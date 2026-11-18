@@ -20,7 +20,6 @@ import dev.bootforge.app.ui.screens.DriveDetails
 import dev.bootforge.app.ui.screens.HomeContent
 import dev.bootforge.app.ui.screens.InstallForm
 import dev.bootforge.app.ui.screens.OperationContent
-import dev.bootforge.app.ui.screens.VentoyOverview
 import dev.bootforge.app.ui.theme.BfColors
 import dev.bootforge.app.ui.theme.BootForgeTheme
 import dev.bootforge.blockdev.FileBlockDevice
@@ -79,12 +78,6 @@ class ScreenshotTest {
     fun home() = paparazzi.snapshot { Screen { HomeContent(driveCount = 1, onNavigate = {}) } }
 
     @Test
-    fun ventoyOverview() {
-        val r = realReport(install = true)
-        paparazzi.snapshot { Screen { Scroll { VentoyOverview(r, 1, "1.1.18", {}, {}) } } }
-    }
-
-    @Test
     fun driveDetails() {
         val r = realReport(install = true)
         paparazzi.snapshot { Screen { DriveDetails(r, 1, {}, {}, {}) } }
@@ -94,6 +87,24 @@ class ScreenshotTest {
     fun installForm() {
         val r = realReport(install = false)
         paparazzi.snapshot { Screen { InstallForm(r, 1) {} } }
+    }
+
+    @Test
+    fun ventoyHubOverview() {
+        val r = realReport(install = true)
+        paparazzi.snapshot {
+            Screen { dev.bootforge.app.ui.screens.ventoy.OverviewTab(dev.bootforge.app.ui.HubState(usb, r.ventoy, r.capacityBytes), "1.1.18") {} }
+        }
+    }
+
+    /** Pré-visualização com o tema ORIGINAL do Ventoy (theme.txt e imagens reais do pacote). */
+    @Test
+    fun themePreview() {
+        val dir = File(System.getProperty("bootforge.ventoyDir"), "plugin/ventoy/theme")
+        val theme = dev.bootforge.ventoy.GrubTheme.parse(File(dir, "theme.txt").readText())
+        val images = listOf("background.png", "menu_c.png", "select_c.png").associateWith { File(dir, it).readBytes() }
+        val preview = dev.bootforge.app.ui.ThemePreview("/ventoy/theme/theme.txt", theme, images, listOf("ubuntu-24.04.1-desktop-amd64.iso", "Win11_24H2_BrazilianPortuguese_x64.iso", "debian-live-12.7.0-amd64-kde.iso"))
+        paparazzi.snapshot { Screen { Scroll { dev.bootforge.app.ui.screens.ventoy.ThemePreviewCanvas(preview) } } }
     }
 
     @Test

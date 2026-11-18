@@ -7,9 +7,9 @@ via USB OTG, sem root e sem computador**.
 
 ![Telas do BootForge](docs/img/app-telas.png)
 
-> **Estado atual: 0.1.0-poc (Etapas 1 e 2 + núcleo do Ventoy).**
-> Instalação, detecção e atualização do Ventoy funcionam e foram validadas em discos virtuais com
-> boot real (QEMU, BIOS e UEFI). **Ainda não testado em celular real** — veja o
+> **Estado atual: 0.2.0 — Etapas 1, 2 e 4 (Ventoy completo) de 7.**
+> Tudo validado em discos virtuais com boot real no QEMU (BIOS e UEFI) e comparado com as
+> ferramentas oficiais do Ventoy. **Ainda não testado em celular real** — veja o
 > [roteiro de testes](docs/ROTEIRO-TESTES-REAIS.md). Status completo em
 > [docs/ACOMPANHAMENTO.md](docs/ACOMPANHAMENTO.md).
 
@@ -19,17 +19,28 @@ via USB OTG, sem root e sem computador**.
 - 🔎 Leitura de MBR/GPT, partições, sistemas de arquivos e setor 0.
 - 🚀 **Ventoy 1.1.18**: detecção automática (mesmas regras do oficial), instalação real (MBR ou GPT,
   alinhamento 4K, espaço reservado, Secure Boot) e atualização **sem apagar as ISOs**.
-- 💿 Lista das ISOs/imagens existentes no pendrive Ventoy, espaço usado/livre.
+- 🗂️ **Gerenciador de arquivos** da partição do Ventoy: copiar do/para o celular, mover, renomear,
+  excluir, pastas, pesquisar, compartilhar, propriedades, espaço por tipo e duplicados.
+- 💿 **Gerenciador de ISOs**: mostra o que aparece no menu do Ventoy (e por quê), identifica o sistema
+  (Ubuntu, Windows, Mint…), boot BIOS/UEFI, integridade por SHA-256, organização por pastas.
+- ⚙️ **ventoy.json**: editor visual (15 plugins e 25 opções oficiais), editor avançado com validação,
+  backups automáticos.
+- 🎨 **Temas**: tema original, importar .zip, aplicar, remover, trocar imagens, pré-visualização.
+- 🧰 **Ferramentas**: verificar instalação, Secure Boot liga/desliga, backup/restauração, persistência.
+- ⬆️ **Atualizações** do GitHub oficial com conferência de SHA-256 (sem apagar as ISOs).
+- 🔔 Operações longas em segundo plano com notificação de progresso.
 - 🧪 Diagnóstico: teste de velocidade de leitura e gravação RAW de imagem com verificação SHA-256.
 - 🛡️ Confirmações fortes (digitar `APAGAR`, conferência quando há vários pendrives) e progresso real.
 - 📜 Histórico local de operações.
 
 Módulos ainda não implementados aparecem **bloqueados** na tela inicial com a etapa prevista.
 
-| Validação do instalador | |
+| Validação no QEMU | |
 |---|---|
-| ![BIOS](docs/img/qemu-mbr-bios-isos.png) | ![UEFI](docs/img/qemu-gpt-uefi.png) |
-| MBR + BIOS, com ISOs em subpastas | GPT + UEFI |
+| ![Apelido](docs/img/qemu-e4-alias-menu.png) | ![ISO](docs/img/qemu-e4-iso-booted.png) |
+| Apelido e contagem gravados pelo app no `ventoy.json` | A ISO copiada pelo app dando boot |
+| ![Tema](docs/img/qemu-e4-theme.png) | ![UEFI](docs/img/qemu-gpt-uefi.png) |
+| Tema aplicado pelo app | GPT + UEFI |
 
 ## Estrutura de pastas
 
@@ -48,9 +59,12 @@ BootForge/
 │   ├── blockdev/           "dispositivo de setores", cópia com progresso e hash
 │   ├── partition/          MBR, GPT, identificação de sistemas de arquivos
 │   ├── fs-fat/             leitor FAT
-│   ├── fs-exfat/           formatador e leitor exFAT
+│   ├── fs-exfat/           exFAT: formatar, ler, gravar, verificar
+│   ├── fs-ext/             ext2/ext3 (persistência)
+│   ├── iso/                ISO9660/Joliet/Rock Ridge/El Torito/UDF + identificação
 │   └── integrity/          SHA-256/512
-├── feature/ventoy-core/    detecção, instalação e atualização do Ventoy
+├── feature/ventoy-core/    instalar, detectar, atualizar, catálogo, temas, ferramentas, download
+├── feature/ventoy-config/  ventoy.json: esquema oficial, validação, edição
 ├── tools/cli/              ferramenta de linha de comando (testes com arquivos .img)
 ├── third_party/            pacote ORIGINAL do Ventoy 1.1.18 + licenças
 └── docs/                   relatório técnico, análise do Ventoy, arquitetura, acompanhamento
@@ -86,6 +100,10 @@ $CLI create  teste.img 8G
 $CLI install teste.img --gpt
 $CLI inspect teste.img
 $CLI update  teste.img
+$CLI put     teste.img minha.iso /Linux/minha.iso     # copia arquivos para o pendrive virtual
+$CLI catalog teste.img                                # o que aparece no menu do Ventoy
+$CLI check   teste.img                                # verificar instalação
+$CLI secureboot teste.img off                         # e mais: json, control, theme, persist, isoinfo
 ```
 
 Para testar o boot no Linux: `tools/scripts/qemu-screenshot.sh teste.img uefi tela.ppm`.

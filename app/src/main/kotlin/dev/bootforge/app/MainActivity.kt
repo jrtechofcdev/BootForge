@@ -25,7 +25,8 @@ import dev.bootforge.app.ui.screens.HomeScreen
 import dev.bootforge.app.ui.screens.OperationOverlay
 import dev.bootforge.app.ui.screens.SettingsScreen
 import dev.bootforge.app.ui.screens.VentoyInstallScreen
-import dev.bootforge.app.ui.screens.VentoyScreen
+import dev.bootforge.app.ui.VentoyViewModel
+import dev.bootforge.app.ui.screens.ventoy.VentoyHubScreen
 import dev.bootforge.app.ui.theme.BfColors
 import dev.bootforge.app.ui.theme.BootForgeTheme
 
@@ -56,6 +57,13 @@ class MainActivity : ComponentActivity() {
 fun BootForgeApp(vm: AppViewModel = viewModel()) {
     val nav = rememberNavController()
     val operation by vm.operation.collectAsStateWithLifecycle()
+    // Android 13+: pede permissão para mostrar a notificação de progresso das operações longas.
+    val notifPermission = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+    ) { }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        if (android.os.Build.VERSION.SDK_INT >= 33) notifPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+    }
     Box(Modifier.fillMaxSize().background(BfColors.Background).safeDrawingPadding()) {
         NavHost(nav, startDestination = Routes.HOME) {
             composable(Routes.HOME) { HomeScreen(vm, onNavigate = { nav.navigate(it) }) }
@@ -67,7 +75,12 @@ fun BootForgeApp(vm: AppViewModel = viewModel()) {
                 DriveDetailScreen(vm, id, onBack = { nav.popBackStack() }, onVentoy = { nav.navigate(Routes.VENTOY) })
             }
             composable(Routes.VENTOY) {
-                VentoyScreen(vm, onBack = { nav.popBackStack() }, onInstall = { nav.navigate(Routes.ventoyInstall(it)) })
+                VentoyHubScreen(
+                    viewModel<VentoyViewModel>(),
+                    onBack = { nav.popBackStack() },
+                    onInstall = { nav.navigate(Routes.ventoyInstall(it)) },
+                    onDeviceDetails = { nav.navigate(Routes.drive(it)) },
+                )
             }
             composable(Routes.VENTOY_INSTALL) { entry ->
                 val id = Uri.decode(entry.arguments?.getString("id").orEmpty())

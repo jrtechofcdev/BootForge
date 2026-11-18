@@ -52,7 +52,7 @@ private data class Module(val title: String, val description: String, val icon: 
 
 private val modules = listOf(
     Module("Gravar ISO", "Gravação inteligente de imagens Windows e Linux", Icons.Filled.Album, null, "Etapa 3"),
-    Module("Ventoy", "Detectar, instalar e atualizar o Ventoy", Icons.Filled.RocketLaunch, Routes.VENTOY, null),
+    Module("Ventoy", "Instalar, ISOs, arquivos, temas e ferramentas", Icons.Filled.RocketLaunch, Routes.VENTOY, null),
     Module("Editor de ISO", "Explorar, extrair e reconstruir imagens", Icons.Filled.EditNote, null, "Etapa 5"),
     Module("Catálogo", "Sistemas operacionais de fontes oficiais", Icons.Filled.CloudDownload, null, "Etapa 6"),
     Module("Pendrives", "Detectar, inspecionar e testar dispositivos", Icons.Filled.Usb, Routes.DRIVES, null),

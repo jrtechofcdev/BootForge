@@ -120,10 +120,10 @@ fun SettingsScreen(vm: AppViewModel, onBack: () -> Unit) {
             SectionCard(title = "Limitações conhecidas desta versão", icon = Icons.Filled.ReportProblem, accent = BfColors.Warning) {
                 listOf(
                     "Pendrives até 1 TiB (limite do driver SCSI atual) e apenas a primeira unidade lógica (LUN 0).",
-                    "Instalação do Ventoy somente com Secure Boot ativado (configuração padrão do Ventoy).",
-                    "Partição de dados lida apenas em exFAT (padrão do Ventoy); NTFS/FAT32 aparecem sem estatísticas.",
-                    "Gerenciador de arquivos, ventoy.json, temas, gravação inteligente de ISO, editor de ISO e catálogo: próximas etapas.",
-                    "Operações longas exigem o app aberto (serviço em segundo plano: pendente).",
+                    "Gerenciador de arquivos e de ISOs somente para partição de dados exFAT (padrão do Ventoy); NTFS/FAT32 aparecem sem estatísticas.",
+                    "Persistência em ext2/ext3 (o script oficial também aceita ext4/xfs).",
+                    "Pré-visualização de temas é aproximada.",
+                    "Gravação inteligente de ISO (Etapa 3), editor de ISO (Etapa 5) e catálogo de sistemas (Etapa 6): próximas etapas.",
                 ).forEach { Text("• $it", style = MaterialTheme.typography.bodySmall) }
             }
         }

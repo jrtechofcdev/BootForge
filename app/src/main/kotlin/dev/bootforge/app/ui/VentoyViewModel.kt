@@ -482,6 +482,8 @@ class VentoyViewModel(app: Application) : AndroidViewModel(app) {
         "${result.files} arquivo(s) analisado(s); ${result.duplicates.size} grupo(s) de duplicados"
     }
 
+    fun clearAnalysis() { _analysis.value = null }
+
     private fun resolveConflict(vol: ExFatVolume, path: String, policy: ConflictPolicy): String? {
         if (!vol.exists(path)) return path
         return when (policy) {

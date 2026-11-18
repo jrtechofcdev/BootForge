@@ -51,18 +51,25 @@ Independências pedidas pelo prompt:
 - Gerenciamento de arquivos do Ventoy ≠ instalação (`ExFatVolume` é independente do `VentoyInstaller`).
 - Editor de ISO terá módulo próprio (`core:iso`, Etapa 5).
 
+## Módulos adicionados na Etapa 4
+
+| Módulo | Conteúdo |
+|---|---|
+| `core:fs-exfat` (escrita) | `ClusterMap` (bitmap+FAT, alocação contígua), `UpcaseTable`, conjuntos de entradas, verificador |
+| `core:fs-fat` (escrita mínima) | substituir/excluir arquivos na VTOYEFI (Secure Boot) |
+| `core:fs-ext` | `ExtFormatter` ext2/ext3 (persistência) |
+| `core:iso` | `IsoFileSystem`, `ImageInspector` |
+| `feature:ventoy-config` | `VentoySchema` (15 plugins, 25 opções), `VentoyConfig`, `VentoyConfigValidator` |
+| `feature:ventoy-core` | `ImageCatalog`, `VentoyConfigStore`, `ThemeManager`/`GrubTheme`, `VentoyMaintenance`, `VentoyPersistence`, `VentoyReleaseClient` |
+| `app` | `AppGraph`, `DriveSession` (conexão única e exclusiva), `OperationRunner` + `OperationService` (primeiro plano), `VentoyViewModel`, telas `ui/screens/ventoy/*` |
+
 ## Módulos futuros previstos
 
 | Módulo | Etapa | Conteúdo |
 |---|---|---|
-| `core:fs-fat` (escrita) | 4 | criar/alterar arquivos na VTOYEFI (Secure Boot off, temas) |
-| `core:fs-exfat` (escrita) | 4 | copiar/mover/renomear/excluir na partição de dados |
-| `feature:ventoy-config` | 4 | editor visual/avançado do `ventoy.json` (plugins da 1.1.18) |
-| `feature:ventoy-themes` | 4 | temas + pré-visualização do menu |
 | `feature:iso-writer` | 3 | análise de ISO, DD híbrido, Windows (FAT32 + WIM dividido / UEFI:NTFS) |
 | `core:iso` + `feature:iso-editor` | 5 | ISO9660/Joliet/UDF, edição não destrutiva, reconstrução |
 | `feature:catalog`, `feature:downloads` | 6 | metadados oficiais centralizados (JSON atualizável), downloads com retomada, checksums |
-| `app` (serviço) | 3–4 | serviço em primeiro plano para operações longas |
 
 ## Dependências
 
@@ -72,6 +79,8 @@ Independências pedidas pelo prompt:
 | AndroidX (core, activity, lifecycle, navigation), Compose BOM | 2025.06.01 | Apache-2.0 | Interface |
 | libaums core | 0.10.0 | Apache-2.0 | Protocolo USB Mass Storage/SCSI |
 | XZ for Java (org.tukaani:xz) | 1.10 | 0BSD | Descompactar `core.img.xz` e `ventoy.disk.img.xz` |
+| kotlinx.serialization (JSON) | 1.8.1 | Apache-2.0 | Leitura/gravação do ventoy.json preservando a ordem |
+| AndroidX DocumentFile | 1.1.0 | Apache-2.0 | Importar/exportar pastas inteiras do celular (SAF) |
 | Paparazzi (somente testes) | 2.0.0-alpha02 | Apache-2.0 | Capturas de tela na JVM |
 | Ventoy | 1.1.18 | GPLv3 (+ componentes) | Componentes de boot gravados no pendrive |
 
