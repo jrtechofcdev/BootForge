@@ -88,3 +88,33 @@ internal class ExtentInputStream(private val reader: RandomReader, private val e
         return r
     }
 }
+
+/**
+ * Acesso aleatório a um arquivo de dentro da imagem (ex.: `sources/install.wim` dentro da ISO
+ * do Windows), sem extraí-lo. Trechos com offset negativo são lidos como zeros (arquivos esparsos).
+ */
+class ExtentRandomReader(private val base: RandomReader, entry: TreeEntry) : RandomReader {
+    private val extents = entry.extents
+    override val size: Long = entry.size
+    /** Posição lógica onde começa cada trecho. */
+    private val starts = LongArray(extents.size).also { a ->
+        var acc = 0L
+        extents.forEachIndexed { i, e -> a[i] = acc; acc += e.length }
+    }
+
+    override fun read(position: Long, buffer: ByteArray, offset: Int, len: Int): Int {
+        if (position >= size || len == 0) return if (len == 0) 0 else -1
+        var idx = java.util.Arrays.binarySearch(starts, position)
+        if (idx < 0) idx = -idx - 2
+        if (idx < 0 || idx >= extents.size) throw IOException("Posição $position fora dos trechos do arquivo")
+        val e = extents[idx]
+        val inExt = position - starts[idx]
+        val n = minOf(len.toLong(), e.length - inExt, size - position).toInt()
+        if (n <= 0) throw IOException("Trechos do arquivo menores que o tamanho declarado")
+        if (e.offset < 0) { buffer.fill(0, offset, offset + n); return n }
+        return base.read(e.offset + inExt, buffer, offset, n)
+    }
+
+    /** Não fecha a imagem de origem (ela pertence a quem abriu). */
+    override fun close() = Unit
+}

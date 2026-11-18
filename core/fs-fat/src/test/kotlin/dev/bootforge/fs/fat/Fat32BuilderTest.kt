@@ -82,6 +82,6 @@ class Fat32BuilderTest {
         val root = Fat32Builder.Dir("/")
         root.file("grande.wim", 5L shl 30) { error("não deve ler") }
         assertFailsWith<java.io.IOException> { Fat32Builder.plan(64L shl 21, root, Fat32Builder.Options()) }
-        assertFailsWith<java.io.IOException> { Fat32Builder.plan(100L shl 11, Fat32Builder.Dir("/"), Fat32Builder.Options()) }
+        assertFailsWith<java.io.IOException> { Fat32Builder.plan(20L shl 11, Fat32Builder.Dir("/"), Fat32Builder.Options()) }
     }
 }

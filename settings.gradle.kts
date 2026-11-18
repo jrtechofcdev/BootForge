@@ -28,6 +28,7 @@ include(":core:iso")           // leitor ISO9660/Joliet/El Torito/UDF (identific
 include(":core:fs-ext")        // formatador ext2/ext3 (arquivos de persistência do Ventoy)
 include(":core:wim")           // divisão de install.wim em .swm (Windows em FAT32)
 include(":feature:ventoy-config") // ventoy.json: esquema, validação, edição e backups
+include(":feature:iso-writer")  // gravação de ISOs (DD, Windows FAT32, extração FAT32)
 include(":feature:ventoy-core")// detecção, instalação e atualização do Ventoy
 
 // Android

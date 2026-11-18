@@ -79,7 +79,7 @@ private fun run(args: Array<String>) {
             val r = VentoyUpdater(VentoyPackage.fromDirectory(ventoyDir)).update(dev, dev.sizeBytes, observer = ConsoleObserver)
             println("\nAtualizado: ${r.fromVersion} → ${r.toVersion}")
         }
-        else -> if (!fsCommand(cmd, file, args)) usage()
+        else -> if (!isoCommand(cmd, file, args) && !fsCommand(cmd, file, args)) usage()
     }
 }
 
@@ -107,6 +107,10 @@ private fun usage(): Nothing {
           bootforge-cli inspect <imagem.img>
           bootforge-cli install <imagem.img> [--gpt] [--reserve MiB] [--no-align] [--ventoy <pasta>]
           bootforge-cli update  <imagem.img> [--ventoy <pasta>]
+
+        Gravação de ISOs (Etapa 3):
+          bootforge-cli iso-analyze <arquivo.iso>
+          bootforge-cli iso-write   <arquivo.iso> <destino.img> [--method dd|windows|extract] [--gpt] [--no-verify]
 
         Arquivos na partição de dados (Ventoy) ou em imagem exFAT:
           bootforge-cli ls    <imagem.img> [/pasta]

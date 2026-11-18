@@ -69,8 +69,12 @@ object Fat32Builder {
     /** Calcula o layout; lança exceção se não couber ou houver arquivo > 4 GiB. */
     fun plan(volumeSectors: Long, root: Dir, opt: Options): Layout = computeLayout(volumeSectors, root, opt).first
 
-    private fun computeLayout(volumeSectors: Long, root: Dir, opt: Options): Pair<Layout, List<Planned>> {
-        val clusterBytes = if (opt.clusterSize > 0) opt.clusterSize else defaultClusterSize(volumeSectors * 512)
+    private fun computeLayout(volumeSectors: Long, root: Dir, opt: Options, autoCluster: Int = 0): Pair<Layout, List<Planned>> {
+        val clusterBytes = when {
+            opt.clusterSize > 0 -> opt.clusterSize
+            autoCluster > 0 -> autoCluster
+            else -> defaultClusterSize(volumeSectors * 512)
+        }
         val spc = clusterBytes / 512
         // FAT: (clusters + 2) entradas de 4 bytes; resolvido por iteração
         var reserved = 32
@@ -87,6 +91,10 @@ object Fat32Builder {
         val pad = ((2048 - dataStartAbs % 2048) % 2048).toInt()
         reserved += pad
         clusters = (volumeSectors - reserved - 2 * fat) / spc
+        if (clusters < 65525 && opt.clusterSize == 0 && spc > 1) {
+            // volume pequeno: tenta clusters menores antes de desistir
+            return computeLayout(volumeSectors, root, opt, clusterBytes / 2)
+        }
         if (clusters < 65525) throw IOException("Volume pequeno demais para FAT32 (mínimo ~ ${65525L * clusterBytes / 1048576} MiB com cluster de ${clusterBytes / 1024} KiB)")
         if (clusters > 0x0FFFFFF5) throw IOException("Volume grande demais para FAT32")
 
