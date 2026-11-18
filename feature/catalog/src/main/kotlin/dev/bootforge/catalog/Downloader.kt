@@ -228,3 +228,22 @@ class Downloader(private val dir: File, private val http: UrlConnectionHttp = Ur
         }
     }
 }
+
+/** Guarda/lê um pedido de download (para retomar depois de fechar o app). */
+object DownloadRequestJson {
+    fun encode(r: DownloadRequest): String = buildJsonObject {
+        put("url", r.url); put("fileName", r.fileName); put("title", r.title)
+        r.version?.let { put("version", it) }; r.systemId?.let { put("systemId", it) }; r.expectedSize?.let { put("expectedSize", it) }
+        r.checksum?.let { put("algorithm", it.algorithm); put("hex", it.hex); put("checksumSource", it.source) }
+        put("verification", r.verification.name); r.signedBy?.let { put("signedBy", it) }
+    }.toString()
+
+    fun decode(text: String): DownloadRequest {
+        val o = Json.parseToJsonElement(text).jsonObject.mapValues { (it.value as JsonPrimitive).content }
+        return DownloadRequest(
+            o.getValue("url"), o.getValue("fileName"), o["title"] ?: o.getValue("fileName"), o["version"], o["systemId"], o["expectedSize"]?.toLongOrNull(),
+            o["hex"]?.let { Checksum(o["algorithm"] ?: "SHA-256", it, o["checksumSource"] ?: "") },
+            runCatching { Verification.valueOf(o["verification"]!!) }.getOrDefault(Verification.NONE), o["signedBy"],
+        )
+    }
+}

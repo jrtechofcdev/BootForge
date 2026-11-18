@@ -24,6 +24,11 @@ import dev.bootforge.app.ui.screens.HistoryScreen
 import dev.bootforge.app.ui.screens.HomeScreen
 import dev.bootforge.app.ui.screens.IsoWriterScreen
 import dev.bootforge.app.ui.screens.IsoEditorScreen
+import dev.bootforge.app.ui.screens.CatalogScreen
+import dev.bootforge.app.ui.screens.DownloadsScreen
+import dev.bootforge.app.ui.CatalogViewModel
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import dev.bootforge.app.ui.IsoEditorViewModel
 import dev.bootforge.app.ui.IsoWriterViewModel
 import dev.bootforge.app.ui.screens.OperationOverlay
@@ -42,6 +47,11 @@ object Routes {
     const val VENTOY = "ventoy"
     const val ISO_WRITER = "iso-writer"
     const val ISO_EDITOR = "iso-editor"
+    const val CATALOG = "catalog"
+    const val DOWNLOADS = "downloads"
+    fun isoWriter(uri: Uri) = "iso-writer?uri=${Uri.encode(uri.toString())}"
+    fun isoEditor(uri: Uri) = "iso-editor?uri=${Uri.encode(uri.toString())}"
+    fun ventoyImport(uri: Uri, sha: String?) = "ventoy?import=${Uri.encode(uri.toString())}&sha=${sha.orEmpty()}"
     const val VENTOY_INSTALL = "ventoy/install/{id}"
     const val HISTORY = "history"
     const val SETTINGS = "settings"
@@ -80,23 +90,38 @@ fun BootForgeApp(vm: AppViewModel = viewModel()) {
                 val id = Uri.decode(entry.arguments?.getString("id").orEmpty())
                 DriveDetailScreen(vm, id, onBack = { nav.popBackStack() }, onVentoy = { nav.navigate(Routes.VENTOY) })
             }
-            composable(Routes.VENTOY) {
+            composable(
+                "${Routes.VENTOY}?import={import}&sha={sha}",
+                arguments = listOf(optionalArg("import"), optionalArg("sha")),
+            ) { entry ->
                 VentoyHubScreen(
                     viewModel<VentoyViewModel>(),
                     onBack = { nav.popBackStack() },
                     onInstall = { nav.navigate(Routes.ventoyInstall(it)) },
                     onDeviceDetails = { nav.navigate(Routes.drive(it)) },
+                    importUri = entry.arguments?.getString("import")?.takeIf { it.isNotEmpty() }?.let(Uri::parse),
+                    importSha = entry.arguments?.getString("sha")?.takeIf { it.isNotEmpty() },
                 )
             }
             composable(Routes.VENTOY_INSTALL) { entry ->
                 val id = Uri.decode(entry.arguments?.getString("id").orEmpty())
                 VentoyInstallScreen(vm, id, onBack = { nav.popBackStack() })
             }
-            composable(Routes.ISO_WRITER) {
-                IsoWriterScreen(vm, viewModel<IsoWriterViewModel>(), onBack = { nav.popBackStack() })
+            composable("${Routes.ISO_WRITER}?uri={uri}", arguments = listOf(optionalArg("uri"))) { entry ->
+                IsoWriterScreen(vm, viewModel<IsoWriterViewModel>(), onBack = { nav.popBackStack() }, initialUri = entry.arguments?.getString("uri")?.let(Uri::parse))
             }
-            composable(Routes.ISO_EDITOR) {
-                IsoEditorScreen(viewModel<IsoEditorViewModel>(), onBack = { nav.popBackStack() })
+            composable("${Routes.ISO_EDITOR}?uri={uri}", arguments = listOf(optionalArg("uri"))) { entry ->
+                IsoEditorScreen(viewModel<IsoEditorViewModel>(), onBack = { nav.popBackStack() }, initialUri = entry.arguments?.getString("uri")?.let(Uri::parse))
+            }
+            composable(Routes.CATALOG) {
+                CatalogScreen(viewModel<CatalogViewModel>(), onBack = { nav.popBackStack() }, onDownloads = { nav.navigate(Routes.DOWNLOADS) })
+            }
+            composable(Routes.DOWNLOADS) {
+                DownloadsScreen(
+                    viewModel<CatalogViewModel>(), onBack = { nav.popBackStack() }, onCatalog = { nav.navigate(Routes.CATALOG) },
+                    onWrite = { nav.navigate(Routes.isoWriter(it)) }, onEdit = { nav.navigate(Routes.isoEditor(it)) },
+                    onVentoy = { uri, sha -> nav.navigate(Routes.ventoyImport(uri, sha)) },
+                )
             }
             composable(Routes.HISTORY) { HistoryScreen(vm, onBack = { nav.popBackStack() }) }
             composable(Routes.SETTINGS) { SettingsScreen(vm, onBack = { nav.popBackStack() }) }
@@ -105,3 +130,6 @@ fun BootForgeApp(vm: AppViewModel = viewModel()) {
         operation?.let { OperationOverlay(vm, it) }
     }
 }
+
+/** Argumento opcional de rota (texto, pode faltar). */
+private fun optionalArg(name: String) = navArgument(name) { type = NavType.StringType; nullable = true; defaultValue = null }

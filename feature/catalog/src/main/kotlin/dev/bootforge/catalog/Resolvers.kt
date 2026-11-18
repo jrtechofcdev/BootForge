@@ -26,7 +26,18 @@ import java.net.URLDecoder
  * | github-release       | API de releases do GitHub (Ventoy)      | sha256.txt da release |
  * | browser              | página oficial (Microsoft)              | — (informado pelo usuário) |
  */
-class Resolvers(private val http: Http, private val keys: (String) -> OpenPgp.Keys) {
+class Resolvers(http: Http, private val keys: (String) -> OpenPgp.Keys) {
+
+    /**
+     * Cache por consulta: Ubuntu Desktop/Server e as edições do Mint usam o MESMO índice e o
+     * mesmo arquivo de checksums. Pedir uma vez só é mais rápido e não sobrecarrega os
+     * servidores oficiais (alguns espelhos limitam pedidos repetidos).
+     */
+    private val http: Http = object : Http {
+        private val cache = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
+        override fun bytes(url: String, maxBytes: Int): ByteArray = cache[url] ?: http.bytes(url, maxBytes).also { cache[url] = it }
+        override fun contentLength(url: String): Long? = http.contentLength(url)
+    }
 
     fun resolve(s: SystemDef): ResolvedImage {
         val r = s.resolver

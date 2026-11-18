@@ -34,6 +34,9 @@ object AppGraph {
 
     val releases: VentoyReleaseClient by lazy { VentoyReleaseClient() }
 
+    /** Catálogo de sistemas e downloads (Etapa 6). */
+    val downloads: DownloadCenter by lazy { DownloadCenter(app) }
+
     /** Pasta onde ficam os pacotes do Ventoy baixados do GitHub oficial. */
     val downloadsDir: File get() = File(app.filesDir, "ventoy-releases").apply { mkdirs() }
 

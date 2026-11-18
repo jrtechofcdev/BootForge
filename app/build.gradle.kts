@@ -49,8 +49,8 @@ android {
         applicationId = "dev.bootforge.app"
         minSdk = 26          // Android 8.0
         targetSdk = 35
-        versionCode = 4
-        versionName = "0.4.0"
+        versionCode = 5
+        versionName = "0.5.0"
     }
 
     buildTypes {
@@ -70,6 +70,8 @@ android {
     }
     buildFeatures { compose = true }
     packaging {
+        // Metadados OSGi repetidos nos JARs do BouncyCastle (não são usados no Android)
+        resources.excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         resources.excludes += setOf("META-INF/AL2.0", "META-INF/LGPL2.1", "META-INF/*.kotlin_module")
     }
 }
@@ -89,6 +91,7 @@ dependencies {
     implementation(project(":feature:ventoy-core"))
     implementation(project(":feature:iso-writer"))
     implementation(project(":feature:iso-editor"))
+    implementation(project(":feature:catalog"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

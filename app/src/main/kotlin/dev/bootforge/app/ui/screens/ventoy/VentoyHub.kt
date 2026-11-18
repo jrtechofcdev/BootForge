@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -64,7 +65,11 @@ fun VentoyHubScreen(
     onBack: () -> Unit,
     onInstall: (String) -> Unit,
     onDeviceDetails: (String) -> Unit,
+    /** Imagem da biblioteca de downloads para copiar para o pendrive (Etapa 6). */
+    importUri: android.net.Uri? = null,
+    importSha: String? = null,
 ) {
+    var importDone by rememberSaveable { mutableStateOf(false) }
     val drives by vm.drives.drives.collectAsStateWithLifecycle()
     val device by vm.device.collectAsStateWithLifecycle()
     val hub by vm.hub.collectAsStateWithLifecycle()
@@ -104,7 +109,17 @@ fun VentoyHubScreen(
                     Notice(h.message, BfColors.Danger, Icons.Filled.Error)
                     Button(onClick = vm::reloadHub) { Text("Tentar novamente") }
                 }
-                is HubLoad.Ready -> if (!h.hub.ventoy.isVentoy) NotVentoy(h.hub, onInstall) else Areas(vm, h.hub, onInstall, onDeviceDetails)
+                is HubLoad.Ready -> if (!h.hub.ventoy.isVentoy) NotVentoy(h.hub, onInstall) else {
+                    if (importUri != null && !importDone) {
+                        Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                            SectionCard(title = "Copiar imagem baixada", icon = Icons.Filled.Info) {
+                                Text("\"${importUri.lastPathSegment}\" será copiada para a raiz do Ventoy e conferida (SHA-256) depois da cópia.", style = MaterialTheme.typography.bodySmall)
+                                Button(onClick = { vm.addImages(listOf(importUri), "/", importSha); importDone = true }, modifier = Modifier.fillMaxWidth()) { Text("Copiar para ${h.hub.info.displayName}") }
+                            }
+                        }
+                    }
+                    Areas(vm, h.hub, onInstall, onDeviceDetails)
+                }
             }
         }
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(16.dp))

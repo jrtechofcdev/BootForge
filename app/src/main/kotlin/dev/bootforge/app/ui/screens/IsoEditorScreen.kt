@@ -126,7 +126,9 @@ private sealed interface Dlg {
 }
 
 @Composable
-fun IsoEditorScreen(vm: IsoEditorViewModel, onBack: () -> Unit) {
+fun IsoEditorScreen(vm: IsoEditorViewModel, onBack: () -> Unit, initialUri: android.net.Uri? = null) {
+    // imagem vinda da biblioteca de downloads (Etapa 6)
+    LaunchedEffect(initialUri) { if (initialUri != null && vm.ui.value.summary == null) vm.open(initialUri) }
     val ui by vm.ui.collectAsStateWithLifecycle()
     var dlg by remember { mutableStateOf<Dlg?>(null) }
     var replaceTarget by remember { mutableStateOf<String?>(null) }

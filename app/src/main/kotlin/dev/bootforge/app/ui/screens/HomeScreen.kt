@@ -54,9 +54,9 @@ private val modules = listOf(
     Module("Gravar ISO", "Gravação inteligente de imagens Windows e Linux", Icons.Filled.Album, Routes.ISO_WRITER, null),
     Module("Ventoy", "Instalar, ISOs, arquivos, temas e ferramentas", Icons.Filled.RocketLaunch, Routes.VENTOY, null),
     Module("Editor de ISO", "Explorar, extrair, editar e reconstruir imagens", Icons.Filled.EditNote, Routes.ISO_EDITOR, null),
-    Module("Catálogo", "Sistemas operacionais de fontes oficiais", Icons.Filled.CloudDownload, null, "Etapa 6"),
+    Module("Catálogo", "Sistemas operacionais de fontes oficiais", Icons.Filled.CloudDownload, Routes.CATALOG, null),
     Module("Pendrives", "Detectar, inspecionar e testar dispositivos", Icons.Filled.Usb, Routes.DRIVES, null),
-    Module("Downloads", "Downloads com retomada e checksum", Icons.Filled.Download, null, "Etapa 6"),
+    Module("Downloads", "Downloads com retomada e checksum", Icons.Filled.Download, Routes.DOWNLOADS, null),
     Module("Histórico", "Operações realizadas neste aparelho", Icons.Filled.History, Routes.HISTORY, null),
     Module("Configurações", "Sobre, licenças e integridade", Icons.Filled.Settings, Routes.SETTINGS, null),
 )

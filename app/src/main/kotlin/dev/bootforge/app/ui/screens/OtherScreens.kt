@@ -113,7 +113,8 @@ fun SettingsScreen(vm: AppViewModel, onBack: () -> Unit) {
                 License("Ventoy 1.1.18 (boot.img, core.img, VTOYEFI)", "GNU GPL v3 — componentes internos com suas licenças (GRUB2: GPLv3; shim/EDK2: BSD; etc.)")
                 License("libaums (USB Mass Storage)", "Apache 2.0")
                 License("XZ for Java", "0BSD / domínio público")
-                License("Kotlin, AndroidX, Jetpack Compose", "Apache 2.0")
+                License("Kotlin, AndroidX, Jetpack Compose, kotlinx.serialization", "Apache 2.0")
+                License("Bouncy Castle (assinaturas OpenPGP)", "MIT")
                 License("Tabela up-case exFAT", "Especificação exFAT da Microsoft (publicação aberta)")
                 Text("Textos completos em THIRD_PARTY_LICENSES.md no código-fonte.", style = MaterialTheme.typography.bodySmall, color = BfColors.TextDim)
             }

@@ -2,4 +2,7 @@
 <paths>
     <!-- Arquivos temporários para compartilhar (copiados do pendrive). -->
     <cache-path name="compartilhar" path="share/" />
+    <!-- ISOs baixadas pelo catálogo (abrir no gravador, no editor ou copiar para o Ventoy). -->
+    <external-files-path name="isos" path="isos/" />
+    <files-path name="isos-internas" path="isos/" />
 </paths>

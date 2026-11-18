@@ -73,7 +73,9 @@ class IsoWriterActions(
 
 /** Ligação com os ViewModels e com o seletor de arquivos do Android. */
 @Composable
-fun IsoWriterScreen(vm: AppViewModel, wvm: IsoWriterViewModel, onBack: () -> Unit) {
+fun IsoWriterScreen(vm: AppViewModel, wvm: IsoWriterViewModel, onBack: () -> Unit, initialUri: android.net.Uri? = null) {
+    // imagem vinda da biblioteca de downloads (Etapa 6)
+    androidx.compose.runtime.LaunchedEffect(initialUri) { if (initialUri != null) wvm.pickIso(initialUri) }
     val ui by wvm.ui.collectAsStateWithLifecycle()
     val drives by vm.drives.drives.collectAsStateWithLifecycle()
     val inspect by vm.inspect.collectAsStateWithLifecycle()

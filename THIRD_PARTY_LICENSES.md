@@ -10,7 +10,9 @@ O **BootForge** é distribuído sob a **GNU General Public License v3** (arquivo
 | libaums core | 0.10.0 | Apache License 2.0 | dependência Maven | https://github.com/magnusja/libaums |
 | XZ for Java | 1.10 | 0BSD | dependência Maven | https://tukaani.org/xz/java.html |
 | Kotlin, kotlinx.coroutines | 2.1.21 / 1.10.2 | Apache License 2.0 | dependência Maven | |
-| kotlinx.serialization (JSON) | 1.8.1 | Apache License 2.0 | dependência Maven | ventoy.json |
+| kotlinx.serialization (JSON) | 1.8.1 | Apache License 2.0 | dependência Maven | ventoy.json, catálogo |
+| Bouncy Castle (bcprov, bcpg, bcutil) | 1.79 | MIT (Bouncy Castle Licence) | dependência Maven | verificação das assinaturas OpenPGP do catálogo |
+| Chaves públicas OpenPGP de Ubuntu, Debian e Linux Mint | — | dados públicos dos projetos | `feature/catalog/.../keys/` | conferidas contra as impressões digitais oficiais (docs/04-fontes-oficiais.md) |
 | AndroidX DocumentFile | 1.1.0 | Apache License 2.0 | dependência Maven | importar/exportar pastas |
 | AndroidX / Jetpack Compose / Material 3 | BOM 2025.06.01 | Apache License 2.0 | dependência Maven | |
 | Tabela up-case do exFAT | — | Especificação exFAT da Microsoft (publicada para implementação) | `core/fs-exfat/src/main/resources/.../upcase.bin` | Tabela recomendada pela especificação (5836 bytes, checksum 0xE619D30D) |

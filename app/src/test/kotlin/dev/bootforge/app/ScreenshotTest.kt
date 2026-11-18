@@ -18,6 +18,21 @@ import dev.bootforge.app.ui.ImageFile
 import dev.bootforge.app.data.OperationState
 import dev.bootforge.app.ui.screens.DriveDetails
 import dev.bootforge.app.ui.screens.HomeContent
+import dev.bootforge.app.ui.screens.CatalogActions
+import dev.bootforge.app.ui.screens.CatalogContent
+import dev.bootforge.app.ui.screens.DownloadsActions
+import dev.bootforge.app.ui.screens.DownloadsContent
+import dev.bootforge.app.data.CenterState
+import dev.bootforge.app.data.EntryState
+import dev.bootforge.app.data.JobState
+import dev.bootforge.app.data.JobStatus
+import dev.bootforge.catalog.CatalogDefinition
+import dev.bootforge.catalog.Checksum
+import dev.bootforge.catalog.DownloadRequest
+import dev.bootforge.catalog.ItemStatus
+import dev.bootforge.catalog.LibraryItem
+import dev.bootforge.catalog.ResolvedImage
+import dev.bootforge.catalog.Verification
 import dev.bootforge.app.ui.screens.IsoEditorActions
 import dev.bootforge.app.ui.screens.IsoEditorContent
 import dev.bootforge.app.ui.EditorItem
@@ -148,6 +163,34 @@ class ScreenshotTest {
         work.deleteRecursively()
         paparazzi.snapshot { Screen { IsoEditorContent(ui, IsoEditorActions()) } }
     }
+
+    /**
+     * Catálogo e Downloads. Versões, tamanhos e checksums abaixo são os retornados pelas fontes
+     * oficiais na consulta real de 18/11/2026 (teste LiveCatalogTest).
+     */
+    private fun centerState(): CenterState {
+        val def = CatalogDefinition.bundled()
+        fun sys(id: String) = def.systems.first { it.id == id }
+        val resolved = mapOf(
+            "windows11" to ResolvedImage(sys("windows11"), null, null, null, null, null, Verification.NONE, notes = sys("windows11").notes),
+            "ubuntu-desktop" to ResolvedImage(sys("ubuntu-desktop"), "26.04.1", "https://releases.ubuntu.com/26.04.1/ubuntu-26.04.1-desktop-amd64.iso", "ubuntu-26.04.1-desktop-amd64.iso", 6482409472, Checksum("SHA-256", "601e30fbf5d97759367c632e2c33630665039b7e2158fd068403da3ccf1bda1f", ""), Verification.SIGNED, "843938DF228D22F7B3742BC0D94AA3F0EFE21092"),
+            "linuxmint-cinnamon" to ResolvedImage(sys("linuxmint-cinnamon"), "22.3", "https://mirrors.edge.kernel.org/linuxmint/stable/22.3/linuxmint-22.3-cinnamon-64bit.iso", "linuxmint-22.3-cinnamon-64bit.iso", 3091660800, Checksum("SHA-256", "a081ab202cfda17f6924128dbd2de8b63518ac0531bcfe3f1a1b88097c459bd4", ""), Verification.SIGNED),
+            "fedora-workstation" to ResolvedImage(sys("fedora-workstation"), "45", "https://download.fedoraproject.org/pub/fedora/linux/releases/45/Workstation/x86_64/iso/Fedora-Workstation-Live-45-1.4.x86_64.iso", "Fedora-Workstation-Live-45-1.4.x86_64.iso", 2925092864, Checksum("SHA-256", "68338c6bfe4f0d64151f2e47efe9f44a8855ad05b460e56b844fb3fa2c9a3beb", ""), Verification.OFFICIAL_CHECKSUM),
+        )
+        val entries = def.systems.associate { it.id to EntryState(it, resolved[it.id]) }
+        val job = JobState(DownloadRequest.of(resolved.getValue("linuxmint-cinnamon")), JobStatus.RUNNING, 1_236_664_320,
+            Progress("Baixando", 1_236_664_320, 3091660800, 6_500_000.0))
+        // ISO real do Alpine baixada e conferida nesta etapa (SHA-256 e tamanho verdadeiros)
+        val lib = LibraryItem("alpine-virt-3.20.3-x86_64.iso", "Alpine Linux", "3.20.3", "alpine-standard", 63963136,
+            "81df854fbd7327d293c726b1eeeb82061d3bc8f5a86a6f77eea720f6be372261", null, ItemStatus.CHECKSUM_OK, null, null, 1_795_000_000_000)
+        return CenterState(def, "embutido no app (${def.updated})", entries, listOf(job), listOf(lib), checkedAt = 1_795_000_000_000)
+    }
+
+    @Test
+    fun catalog() = paparazzi.snapshot { Screen { CatalogContent(centerState(), null, CatalogActions()) } }
+
+    @Test
+    fun downloads() = paparazzi.snapshot { Screen { DownloadsContent(centerState(), "/storage/emulated/0/Android/data/dev.bootforge.app/files/isos · livre: 41,2 GB", DownloadsActions()) } }
 
     @Test
     fun home() = paparazzi.snapshot { Screen { HomeContent(driveCount = 1, onNavigate = {}) } }

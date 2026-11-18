@@ -35,6 +35,7 @@ fun main(args: Array<String>) {
 
 private fun run(args: Array<String>) {
     if (args.isEmpty()) usage()
+    if (catalogCommand(args)) return
     val cmd = args[0]
     val file = args.getOrNull(1)?.let(::File) ?: usage()
     val ventoyDir = File(option(args, "--ventoy") ?: "third_party/ventoy-1.1.18")
@@ -119,6 +120,10 @@ private fun usage(): Nothing {
           bootforge-cli iso-rebuild <arquivo.iso> <nova.iso> [--full] [--label NOME]
                         [--put local:/destino] [--text /caminho=arquivo] [--rm /caminho]
                         [--mkdir /pasta] [--mv /item:/pasta] [--ren /item:novo-nome]
+
+        Catálogo e downloads (Etapa 6):
+          bootforge-cli catalog                          versões atuais nas fontes oficiais
+          bootforge-cli catalog-download <id> <pasta>    baixa/continua e verifica (ex.: debian-netinst)
 
         Arquivos na partição de dados (Ventoy) ou em imagem exFAT:
           bootforge-cli ls    <imagem.img> [/pasta]

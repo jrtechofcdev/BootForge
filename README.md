@@ -7,7 +7,7 @@ via USB OTG, sem root e sem computador**.
 
 ![Telas do BootForge](docs/img/app-telas.png)
 
-> **Estado atual: 0.4.0 — Etapas 1 a 5 de 7 (gravação de ISOs, Ventoy completo e editor de ISO).**
+> **Estado atual: 0.5.0 — Etapas 1 a 6 de 7 (gravação de ISOs, Ventoy, editor de ISO, catálogo e downloads).**
 > Tudo validado em discos virtuais com boot real no QEMU (BIOS e UEFI) e comparado com as
 > ferramentas oficiais do Ventoy. **Ainda não testado em celular real** — veja o
 > [roteiro de testes](docs/ROTEIRO-TESTES-REAIS.md). Status completo em
@@ -26,6 +26,11 @@ via USB OTG, sem root e sem computador**.
   dois modos — *Preservar inicialização* (mantém El Torito, MBR/GPT híbridos e carregadores no lugar)
   ou *Reconstrução completa* (ISO9660 + Joliet + Rock Ridge + **UDF** para o Windows) — e valida a
   ISO gerada relendo tudo. Também extrai arquivos e pastas.
+- 🌐 **Catálogo e downloads** de fontes oficiais (Ubuntu, Linux Mint, Debian, Fedora, Zorin, Pop!_OS,
+  Alpine, Ventoy; Windows pelo site da Microsoft): versão mais recente consultada nas APIs/feeds
+  oficiais, **assinaturas OpenPGP verificadas** (Ubuntu, Debian, Mint), downloads com pausa e
+  retomada, verificação do checksum e biblioteca para gravar, copiar para o Ventoy ou editar.
+  Detalhes em [docs/04-fontes-oficiais.md](docs/04-fontes-oficiais.md).
 - 🚀 **Ventoy 1.1.18**: detecção automática (mesmas regras do oficial), instalação real (MBR ou GPT,
   alinhamento 4K, espaço reservado, Secure Boot) e atualização **sem apagar as ISOs**.
 - 🗂️ **Gerenciador de arquivos** da partição do Ventoy: copiar do/para o celular, mover, renomear,
@@ -79,6 +84,7 @@ BootForge/
 │   └── integrity/          SHA-256/512
 ├── feature/iso-writer/     Etapa 3: análise da ISO e gravação (DD, Windows FAT32, extração)
 ├── feature/iso-editor/     Etapa 5: edição não destrutiva, reconstrução (ISO9660/Joliet/RR/UDF) e validação
+├── feature/catalog/        Etapa 6: catálogo (catalog.json), fontes oficiais, assinaturas, downloads, biblioteca
 ├── feature/ventoy-core/    instalar, detectar, atualizar, catálogo, temas, ferramentas, download
 ├── feature/ventoy-config/  ventoy.json: esquema oficial, validação, edição
 ├── tools/cli/              ferramenta de linha de comando (testes com arquivos .img)
@@ -123,6 +129,8 @@ $CLI secureboot teste.img off                         # e mais: json, control, t
 $CLI iso-analyze minha.iso                            # Etapa 3: qual método usar e por quê
 $CLI iso-write   minha.iso teste.img [--gpt]           # grava a ISO no pendrive virtual
 $CLI iso-info    minha.iso                            # Etapa 5: formato, boot e modos de reconstrução
+$CLI catalog                                          # Etapa 6: versões atuais nas fontes oficiais
+$CLI catalog-download debian-netinst ./isos            # baixa/continua e verifica a assinatura
 $CLI iso-rebuild minha.iso nova.iso --text /boot/grub/grub.cfg=meu.cfg --mkdir /extras
 ```
 

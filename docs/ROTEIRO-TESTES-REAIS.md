@@ -15,7 +15,7 @@ Anote os resultados na tabela do final e me envie (ou cole no `docs/ACOMPANHAMEN
 
 ## Instalação do app
 
-1. Copie o arquivo `BootForge-0.4.0.apk` para o celular.
+1. Copie o arquivo `BootForge-0.5.0.apk` para o celular.
 2. Toque nele e permita "instalar apps desconhecidos" para o gerenciador de arquivos.
 3. Abra o **BootForge**.
 
@@ -127,6 +127,18 @@ Use o pendrive com Ventoy do passo 4. Abra **Ventoy** na tela inicial — aparec
 
 *Tempo de referência:* anote quanto levou para gerar + validar (passo 31).
 
+## Etapa 6 — Catálogo e downloads (passos 35 a 41)
+
+| Passo | Onde | O que fazer | Esperado |
+|---|---|---|---|
+| 35 | Tela inicial → **Catálogo** | Aguarde a consulta | Versões atuais (Ubuntu, Mint, Debian, Fedora, Zorin, Pop!_OS, Alpine, Ventoy) com tamanho e selo; Ubuntu/Debian/Mint com **"Assinatura oficial"** |
+| 36 | Catálogo → **Alpine Linux** → *Baixar* | Acompanhe em **Downloads** | Progresso, velocidade e tempo restante; notificação de download |
+| 37 | Durante o download | *Pausar* → feche o app → abra de novo → *Continuar* | Continua de onde parou (não recomeça do zero) |
+| 38 | Durante um download maior (ex.: Debian netinst) | Desligue o Wi-Fi por alguns segundos e ligue de novo | O download continua sozinho |
+| 39 | Ao terminar | Veja a **Biblioteca** | Selo "Verificada: checksum oficial" (ou "assinatura oficial"); tente baixar o mesmo de novo → "já está na biblioteca" |
+| 40 | Biblioteca → *Gravar no pendrive* / *Copiar para o Ventoy* / *Abrir no editor* | Escolha cada ação | Abre a tela certa já com a imagem escolhida |
+| 41 | Catálogo → **Windows 11** → *Abrir site oficial* | Baixe pelo navegador → Downloads → *Verificar um arquivo* → cole o SHA-256 da página da Microsoft | "Checksum confere ✓" |
+
 ## Tabela de resultados
 
 | Item | Resultado (OK / falhou + mensagem) |
@@ -154,3 +166,7 @@ Use o pendrive com Ventoy do passo 4. Abra **Ventoy** na tela inicial — aparec
 | 31–32. Nova ISO validada e iniciando no PC (tempo: ___ min) | |
 | 33. Extração | |
 | 34. Windows reconstruída + instalador abre | |
+| 35. Catálogo (quais versões apareceram) | |
+| 36–38. Download, pausa, retomada, queda de rede | |
+| 39–40. Biblioteca e integrações | |
+| 41. Windows pelo navegador + verificação | |

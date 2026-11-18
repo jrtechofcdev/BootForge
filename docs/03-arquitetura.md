@@ -90,11 +90,17 @@ Por que a gravação é sequencial: a nova ISO é descrita como uma lista de ped
 fixas (cópias do original com correções, bytes gerados, dados de arquivos). Isso permite gravar
 direto num arquivo do celular (o Android não dá acesso aleatório a todo destino).
 
+## Módulos adicionados na Etapa 6
+
+| Módulo | Conteúdo |
+|---|---|
+| `feature:catalog` | `CatalogDefinition` (catalog.json centralizado e validado), `Resolvers` (uma estratégia por fonte oficial), `OpenPgp` (Bouncy Castle + chaves oficiais embutidas), `Downloader` (Range/If-Range, retomada automática, pausa/cancelamento), `Library` (biblioteca + situação de verificação), `Http` (interface para testes sem internet) |
+| `app` | `DownloadCenter` (fila, consultas, pedidos salvos em disco), `DownloadService` (primeiro plano), `CatalogViewModel`, telas Catálogo e Downloads; rotas com `?uri=` para abrir imagens da biblioteca no gravador, no editor e no Ventoy |
+
 ## Módulos futuros previstos
 
 | Módulo | Etapa | Conteúdo |
 |---|---|---|
-| `feature:catalog`, `feature:downloads` | 6 | metadados oficiais centralizados (JSON atualizável), downloads com retomada, checksums |
 
 ## Dependências
 
@@ -105,6 +111,7 @@ direto num arquivo do celular (o Android não dá acesso aleatório a todo desti
 | libaums core | 0.10.0 | Apache-2.0 | Protocolo USB Mass Storage/SCSI |
 | XZ for Java (org.tukaani:xz) | 1.10 | 0BSD | Descompactar `core.img.xz` e `ventoy.disk.img.xz` |
 | kotlinx.serialization (JSON) | 1.8.1 | Apache-2.0 | Leitura/gravação do ventoy.json preservando a ordem |
+| Bouncy Castle (bcprov/bcpg) | 1.79 | MIT | Verificação das assinaturas OpenPGP dos checksums oficiais (Ubuntu, Debian, Mint) |
 | AndroidX DocumentFile | 1.1.0 | Apache-2.0 | Importar/exportar pastas inteiras do celular (SAF) |
 | Paparazzi (somente testes) | 2.0.0-alpha02 | Apache-2.0 | Capturas de tela na JVM |
 | Ventoy | 1.1.18 | GPLv3 (+ componentes) | Componentes de boot gravados no pendrive |
