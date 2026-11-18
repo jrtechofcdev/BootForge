@@ -30,6 +30,7 @@ include(":core:wim")           // divisão de install.wim em .swm (Windows em FA
 include(":feature:ventoy-config") // ventoy.json: esquema, validação, edição e backups
 include(":feature:iso-writer")  // gravação de ISOs (DD, Windows FAT32, extração FAT32)
 include(":feature:iso-editor")  // editor de ISO: edição não destrutiva e reconstrução
+include(":feature:catalog")     // catálogo de sistemas (fontes oficiais), downloads e verificação
 include(":feature:ventoy-core")// detecção, instalação e atualização do Ventoy
 
 // Android
