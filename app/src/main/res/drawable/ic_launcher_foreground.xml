@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ícone: pendrive estilizado com uma "faísca" de forja. Área segura: 66x66 dentro de 108x108. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- conector -->
+    <path android:fillColor="#FF8FA3BF" android:pathData="M45,26h18v12h-18z" />
+    <path android:fillColor="#FF0B0F17" android:pathData="M49,30h3v4h-3zM56,30h3v4h-3z" />
+    <!-- corpo -->
+    <path android:fillColor="#FFFF7A1A" android:pathData="M40,38h28a4,4 0,0 1,4 4v34a6,6 0,0 1,-6 6h-24a6,6 0,0 1,-6 -6v-34a4,4 0,0 1,4 -4z" />
+    <!-- raio (boot) -->
+    <path android:fillColor="#FF0B0F17" android:pathData="M57,46l-11,15h7l-3,13l11,-16h-7z" />
+</vector>
