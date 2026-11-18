@@ -16,6 +16,9 @@ dependencies {
     api(project(":core:partition"))
     api(project(":core:fs-fat"))
     api(project(":core:fs-exfat"))
+    api(project(":core:fs-ext"))
+    api(project(":core:iso"))
+    api(project(":feature:ventoy-config"))
     implementation(libs.xz)
     testImplementation(kotlin("test"))
 }

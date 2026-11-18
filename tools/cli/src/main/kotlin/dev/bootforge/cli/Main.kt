@@ -76,7 +76,7 @@ private fun run(args: Array<String>) {
             println("\nConcluído: Ventoy ${report.version} (${report.layout.style}) — VTOYEFI SHA-256 ${report.efiSha256}")
         }
         "update" -> FileBlockDevice.open(file).use { dev ->
-            val r = VentoyUpdater(VentoyPackage.fromDirectory(ventoyDir)).update(dev, dev.sizeBytes, ConsoleObserver)
+            val r = VentoyUpdater(VentoyPackage.fromDirectory(ventoyDir)).update(dev, dev.sizeBytes, observer = ConsoleObserver)
             println("\nAtualizado: ${r.fromVersion} → ${r.toVersion}")
         }
         else -> if (!fsCommand(cmd, file, args)) usage()
@@ -116,6 +116,16 @@ private fun usage(): Nothing {
           bootforge-cli rm    <imagem.img> </caminho> [-r]
           bootforge-cli mv    <imagem.img> </caminho> </pasta-destino>
           bootforge-cli ren   <imagem.img> </caminho> <novo-nome>
+
+        Ventoy (Etapa 4):
+          bootforge-cli check      <imagem.img>                  verificar instalação
+          bootforge-cli secureboot <imagem.img> on|off
+          bootforge-cli catalog    <imagem.img>                  imagens e se aparecem no menu
+          bootforge-cli isoinfo    <imagem.img> </caminho.iso>   identificar uma ISO do pendrive
+          bootforge-cli json       <imagem.img> show|validate|set <arquivo.json>
+          bootforge-cli control    <imagem.img> <VTOY_OPCAO> <valor|->
+          bootforge-cli theme      <imagem.img> install-original|apply </ventoy/.../theme.txt>|default
+          bootforge-cli persist    <imagem.img> </caminho.dat> <MiB> [ubuntu|debian] [--ext2] [--link /iso]
         """.trimIndent(),
     )
     exitProcess(2)

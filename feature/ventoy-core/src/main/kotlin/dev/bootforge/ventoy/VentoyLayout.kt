@@ -20,9 +20,8 @@ data class VentoyInstallOptions(
     /** Alinhar as partições em 4 KB (opção "Align partitions with 4KB"). */
     val align4k: Boolean = true,
     /**
-     * Suporte a Secure Boot. Nesta versão só `true` é suportado: a partição VTOYEFI é gravada
-     * exatamente como vem no pacote (com shim/MokManager). Desativar exige editar o FAT16
-     * (remover/renomear arquivos EFI), o que ainda não foi implementado.
+     * Suporte a Secure Boot (padrão do Ventoy2Disk: ligado). Desligado = mesmo ajuste do
+     * `secureboot_proc` oficial na VTOYEFI (o carregador GRUB passa a ser o BOOTX64.EFI direto).
      */
     val secureBoot: Boolean = true,
     /** Rótulo da partição de dados exFAT. */

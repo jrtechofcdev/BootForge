@@ -82,9 +82,6 @@ class VentoyInstaller(
             // Mesmo limite do Ventoy oficial: "Currently Ventoy does not support 4K native device."
             throw IOException("Dispositivos com setor nativo de ${dev.blockSize} bytes não são suportados pelo Ventoy")
         }
-        if (!options.secureBoot) {
-            throw UnsupportedOperationException("Instalação sem suporte a Secure Boot ainda não implementada")
-        }
         val layout = VentoyLayout.compute(dev.blockCount, options)
         info("Disco: ${dev.blockCount} setores; estilo ${layout.style}; partição 1 = ${layout.part1Start}..${layout.part1End}; partição 2 = ${layout.part2Start}..${layout.part2End}")
 
@@ -121,6 +118,16 @@ class VentoyInstaller(
             )
         }
         info("VTOYEFI gravada: SHA-256 ${efi.sha256}")
+        // confere a imagem gravada ANTES de qualquer ajuste
+        val efiCheck = BlockTransfer.hashRegion(
+            dev, layout.part2Start, VentoyPackage.EFI_PART_BYTES, "Conferindo VTOYEFI",
+            ProgressListener { observer.onProgress(it) }, cancel,
+        )
+        if (!Hashing.matches(efi.sha256, efiCheck)) throw IOException("Verificação falhou: VTOYEFI lida difere da gravada")
+        if (!options.secureBoot) {
+            VentoyMaintenance.disableSecureBoot(dev.slice(layout.part2Start, layout.part2Sectors))
+            info("Secure Boot desligado na VTOYEFI (mesmo procedimento do Ventoy2Disk)")
+        }
 
         // ---------- 4. Stage 1 (core.img) ----------
         step(InstallStep.WRITE_STAGE1)
@@ -141,13 +148,8 @@ class VentoyInstaller(
             stage1.second.copyInto(buf, (stage1.first * 512).toInt())
         }
         if (!head.contentEquals(expectedHead)) throw IOException("Verificação falhou: o primeiro 1 MiB lido difere do gravado")
-        val efiCheck = BlockTransfer.hashRegion(
-            dev, layout.part2Start, VentoyPackage.EFI_PART_BYTES, "Conferindo VTOYEFI",
-            ProgressListener { observer.onProgress(it) }, cancel,
-        )
-        if (!Hashing.matches(efi.sha256, efiCheck)) throw IOException("Verificação falhou: VTOYEFI lida difere da gravada")
         val detected = VentoyDetector.inspect(dev, scanData = true)
-        if (!detected.isVentoy || detected.version != pkg.version) {
+        if (!detected.isVentoy || detected.version != pkg.version || detected.secureBootSupport != options.secureBoot) {
             throw IOException("Verificação falhou: o Ventoy não foi reconhecido após a instalação")
         }
         info("Instalação verificada: Ventoy ${detected.version} reconhecido; leitura confere com a gravação")

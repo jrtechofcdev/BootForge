@@ -23,7 +23,25 @@ import java.io.InputStream
  * @param open função que abre um arquivo do pacote pelo caminho relativo
  *             (no Android lê dos assets do APK; no PC lê de uma pasta).
  */
-class VentoyPackage(private val open: (String) -> InputStream) {
+class VentoyPackage(
+    private val open: (String) -> InputStream,
+    /** Lista os arquivos de uma pasta do pacote (ex.: "plugin/ventoy/theme"); vazio se não suportado. */
+    private val lister: (String) -> List<String> = { emptyList() },
+    /**
+     * Hashes esperados dos arquivos. Pacote embutido: valores fixos de [KNOWN_SHA256].
+     * Pacote baixado: hashes registrados na extração, logo após conferir o SHA-256 do arquivo
+     * da release contra o `sha256.txt` oficial.
+     */
+    private val expectedHashes: Map<String, String>? = null,
+    /** Descrição da origem (para a interface): "embutido no app" ou "baixado do GitHub oficial". */
+    val origin: String = "embutido no app",
+) {
+
+    /** Abre um arquivo qualquer do pacote (ex.: imagens do tema original). */
+    fun openFile(path: String): InputStream = open(path)
+
+    /** Arquivos de uma pasta do pacote, recursivamente (caminhos relativos ao pacote). */
+    fun listFiles(dir: String): List<String> = lister(dir)
 
     val version: String by lazy { open(VERSION).use { String(it.readBytes(), Charsets.US_ASCII).trim() } }
 
@@ -51,7 +69,7 @@ class VentoyPackage(private val open: (String) -> InputStream) {
      */
     fun verifyIntegrity(): List<String> {
         val ver = runCatching { version }.getOrElse { return listOf("Pacote do Ventoy não encontrado ou ilegível (${it.message})") }
-        val known = KNOWN_SHA256[ver] ?: return listOf("Versão $ver sem hashes de referência cadastrados")
+        val known = expectedHashes ?: KNOWN_SHA256[ver] ?: return listOf("Versão $ver sem hashes de referência cadastrados")
         return known.mapNotNull { (path, expected) ->
             val actual = runCatching {
                 open(path).use { input ->
@@ -91,6 +109,15 @@ class VentoyPackage(private val open: (String) -> InputStream) {
         )
 
         /** Pacote em uma pasta do computador (ex.: `third_party/ventoy-1.1.18`). */
-        fun fromDirectory(dir: File): VentoyPackage = VentoyPackage { path -> File(dir, path).inputStream() }
+        fun fromDirectory(dir: File, expectedHashes: Map<String, String>? = null, origin: String = "pasta local"): VentoyPackage =
+            VentoyPackage(
+                open = { path -> File(dir, path).inputStream() },
+                lister = { sub ->
+                    val base = File(dir, sub)
+                    base.walkTopDown().filter { it.isFile }.map { sub.trimEnd('/') + "/" + it.relativeTo(base).invariantSeparatorsPath }.toList()
+                },
+                expectedHashes = expectedHashes,
+                origin = origin,
+            )
     }
 }

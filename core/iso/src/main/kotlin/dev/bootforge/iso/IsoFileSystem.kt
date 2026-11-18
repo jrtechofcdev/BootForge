@@ -62,9 +62,10 @@ class IsoFileSystem private constructor(
             val nameBytes = raw.copyOfRange(pos + 33, pos + 33 + nameLen)
             val special = nameLen == 1 && (nameBytes[0].toInt() == 0 || nameBytes[0].toInt() == 1)
             if (!special) {
-                val name = if (joliet) String(nameBytes, Charsets.UTF_16BE) else String(nameBytes, Charsets.ISO_8859_1)
+                val rockRidge = if (joliet) null else rockRidgeName(raw, pos, len, nameLen)
+                val name = rockRidge ?: if (joliet) String(nameBytes, Charsets.UTF_16BE) else String(nameBytes, Charsets.ISO_8859_1)
                 out += IsoEntry(
-                    name = name.substringBefore(';').let { if (!joliet && it.endsWith(".")) it.dropLast(1) else it },
+                    name = if (rockRidge != null) rockRidge else name.substringBefore(';').let { if (!joliet && it.endsWith(".")) it.dropLast(1) else it },
                     isDirectory = flags and 0x02 != 0,
                     extentLba = u32(raw, pos + 2),
                     size = u32(raw, pos + 10),
@@ -74,6 +75,28 @@ class IsoFileSystem private constructor(
             pos += len
         }
         return out
+    }
+
+    /**
+     * Nome longo Rock Ridge (entrada "NM" da área System Use, padrão SUSP/RRIP).
+     * Muitas ISOs Linux só têm nomes completos ali (o ISO9660 puro abrevia, ex.: ".disk" → "_DISK").
+     */
+    private fun rockRidgeName(raw: ByteArray, pos: Int, len: Int, nameLen: Int): String? {
+        var p = pos + 33 + nameLen + (if (nameLen % 2 == 0) 1 else 0)
+        val end = pos + len
+        val sb = StringBuilder()
+        var found = false
+        while (p + 4 <= end) {
+            val sig = String(raw, p, 2, Charsets.US_ASCII)
+            val l = raw[p + 2].toInt() and 0xFF
+            if (l < 4 || p + l > end) break
+            if (sig == "NM" && l >= 5) {
+                val flags = raw[p + 4].toInt() and 0xFF
+                if (flags and 0x06 == 0) { sb.append(String(raw, p + 5, l - 5, Charsets.UTF_8)); found = true }
+            }
+            p += l
+        }
+        return if (found && sb.isNotEmpty()) sb.toString() else null
     }
 
     companion object {

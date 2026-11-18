@@ -4,6 +4,7 @@ import dev.bootforge.blockdev.BlockDevice
 import dev.bootforge.blockdev.BlockTransfer
 import dev.bootforge.blockdev.ProgressListener
 import dev.bootforge.blockdev.readBlocks
+import dev.bootforge.blockdev.slice
 import dev.bootforge.integrity.CancellationSignal
 import dev.bootforge.integrity.Hashing
 import dev.bootforge.partition.Gpt
@@ -33,6 +34,8 @@ class VentoyUpdater(private val pkg: VentoyPackage) {
     fun update(
         dev: BlockDevice,
         confirmedSizeBytes: Long,
+        /** null = mantém a escolha atual (como o Ventoy2Disk); true/false = muda o Secure Boot. */
+        secureBoot: Boolean? = null,
         observer: InstallObserver = object : InstallObserver {},
         cancel: CancellationSignal = CancellationSignal.NONE,
     ): UpdateReport {
@@ -47,9 +50,7 @@ class VentoyUpdater(private val pkg: VentoyPackage) {
         if (!geometryOk || before.part2Start == null || before.style == null) {
             throw IOException("O dispositivo não contém uma instalação do Ventoy reconhecível")
         }
-        if (before.secureBootSupport == false) {
-            throw UnsupportedOperationException("Instalação atual sem Secure Boot: atualização desse modo ainda não implementada")
-        }
+        val wantSecureBoot = secureBoot ?: (before.secureBootSupport != false)
         val part2Start = before.part2Start
         info("Atualizando Ventoy ${before.version ?: "desconhecido"} → ${pkg.version}")
 
@@ -91,8 +92,12 @@ class VentoyUpdater(private val pkg: VentoyPackage) {
         val check = BlockTransfer.hashRegion(dev, part2Start, VentoyPackage.EFI_PART_BYTES, "Conferindo VTOYEFI",
             ProgressListener { observer.onProgress(it) }, cancel)
         if (!Hashing.matches(efi.sha256, check)) throw IOException("Verificação falhou: VTOYEFI lida difere da gravada")
+        if (!wantSecureBoot) {
+            VentoyMaintenance.disableSecureBoot(dev.slice(part2Start, VentoyPackage.EFI_PART_SECTORS))
+            info("Secure Boot mantido desligado (mesmo procedimento do Ventoy2Disk)")
+        }
         val after = VentoyDetector.inspect(dev, scanData = true)
-        if (!after.isVentoy || after.version != pkg.version) throw IOException("Verificação falhou após a atualização")
+        if (!after.isVentoy || after.version != pkg.version || after.secureBootSupport != wantSecureBoot) throw IOException("Verificação falhou após a atualização")
         info("Atualização concluída e verificada: Ventoy ${after.version}")
         return UpdateReport(before.version, pkg.version, after, log)
     }

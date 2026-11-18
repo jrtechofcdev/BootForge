@@ -15,6 +15,7 @@ import java.io.IOException
  * se não houver Ventoy, na primeira partição exFAT (ou no disco inteiro, se for exFAT).
  */
 internal fun fsCommand(cmd: String, image: File, args: Array<String>): Boolean {
+    if (ventoyCommand(cmd, image, args)) return true
     val writes = cmd in setOf("put", "mkdir", "rm", "mv", "ren")
     if (cmd !in setOf("ls", "get") && !writes) return false
     FileBlockDevice.open(image, readOnly = !writes).use { dev ->

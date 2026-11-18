@@ -236,6 +236,30 @@ class ExFatWriteTest {
     }
 
     @Test
+    fun consistencyCheckerPassesAndDetectsCorruption() {
+        val (_, dev) = newVolume()
+        dev.use {
+            val vol = ExFatVolume.open(dev, writable = true)
+            vol.mkdirs("/a/b")
+            vol.put("/a/b/x.bin", Random(5).nextBytes(100_000))
+            val pre = vol.createContiguousFile("/persist.dat", 1L shl 20, zeroFill = false)
+            assertTrue(pre.contiguous)
+            assertNotNull(vol.contiguousSectorRange("/persist.dat"))
+            val ok = ExFatVolume.open(dev).checkConsistency()
+            assertTrue(ok.errors.isEmpty() && ok.warnings.isEmpty(), ok.toString())
+            assertEquals(2, ok.files)
+            // corrompe o checksum de uma entrada
+            val loc = vol.resolve("/persist.dat")!!.location!!
+            val boot = dev.readBlocks(0, 1)
+            val heap = ExFatEntries.u32(boot, 88); val spc = 1 shl boot[109].toInt(); val root = ExFatEntries.u32(boot, 96)
+            val lba = heap + (root - 2) * spc
+            val c = dev.readBlocks(lba, spc); c[loc.offset + 2] = (c[loc.offset + 2] + 1).toByte(); dev.write(lba, c)
+            val bad = ExFatVolume.open(dev).checkConsistency()
+            assertTrue(bad.errors.any { it.contains("checksum") }, bad.toString())
+        }
+    }
+
+    @Test
     fun worksOnVolumeCreatedByMkfsExfat() {
         val mkfs = listOf("/usr/sbin/mkfs.exfat", "/sbin/mkfs.exfat").map(::File).firstOrNull { it.exists() } ?: return
         val f = File.createTempFile("mkfs", ".img").also { files += it }
