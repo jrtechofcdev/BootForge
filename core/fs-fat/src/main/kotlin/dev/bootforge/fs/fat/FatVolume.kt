@@ -211,6 +211,30 @@ class FatVolume private constructor(private val dev: BlockDevice, val isWritable
         return data.copyOf(e.size.toInt())
     }
 
+    /** Abre um arquivo para leitura sequencial (adequado para arquivos grandes). */
+    fun openFile(path: String): java.io.InputStream {
+        val e = resolve(path) ?: throw IOException("Arquivo não encontrado: $path")
+        if (e.isDirectory) throw IOException("É uma pasta: $path")
+        val clusters = if (e.size == 0L) emptyList() else chain(e.firstCluster)
+        if (clusters.size.toLong() * clusterBytes < e.size) throw IOException("Cadeia de clusters menor que o arquivo: $path")
+        return object : java.io.InputStream() {
+            private var pos = 0L
+            private val buf = ByteArray(clusterBytes)
+            private var bufIdx = -1
+            override fun read(): Int { val b = ByteArray(1); return if (read(b, 0, 1) < 0) -1 else b[0].toInt() and 0xFF }
+            override fun read(b: ByteArray, off: Int, len: Int): Int {
+                if (pos >= e.size) return -1
+                val idx = (pos / clusterBytes).toInt()
+                if (idx != bufIdx) { dev.read(clusterLba(clusters[idx]), buf); bufIdx = idx }
+                val inC = (pos % clusterBytes).toInt()
+                val n = minOf(len.toLong(), (clusterBytes - inC).toLong(), e.size - pos).toInt()
+                buf.copyInto(b, off, inC, inC + n)
+                pos += n
+                return n
+            }
+        }
+    }
+
     /** Percorre todos os arquivos recursivamente. */
     fun walk(path: String = "/", visit: (path: String, entry: FatEntry) -> Unit) {
         for (e in list(path)) {
