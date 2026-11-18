@@ -232,7 +232,10 @@ class VentoyViewModel(app: Application) : AndroidViewModel(app) {
     /** Ação rápida (sem painel de progresso): erros viram mensagem. */
     private fun quick(block: suspend () -> String?) {
         viewModelScope.launch(Dispatchers.IO) {
-            runCatching { block() }.onSuccess { it?.let(::say) }.onFailure { say("Erro: ${it.message ?: it.javaClass.simpleName}") }
+            runCatching { block() }.onSuccess { it?.let(::say) }.onFailure {
+                dev.bootforge.integrity.Diag.e("Ventoy", "Ação falhou", it)
+                say("Erro: ${it.message ?: it.javaClass.simpleName}")
+            }
         }
     }
 

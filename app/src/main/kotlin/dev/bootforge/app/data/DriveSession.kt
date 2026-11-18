@@ -6,6 +6,7 @@ import dev.bootforge.usb.UsbDriveManager
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.IOException
+import dev.bootforge.integrity.Diag
 
 /**
  * Sessão com UM pendrive: mantém a conexão USB aberta enquanto o usuário navega (evita
@@ -26,6 +27,7 @@ class DriveSession(private val drives: UsbDriveManager) {
         try {
             block(dev)
         } catch (e: IOException) {
+            Diag.e("Sessão", "Erro de E/S com o pendrive (removido?) — a conexão será reaberta na próxima vez", e)
             closeLocked() // pendrive pode ter sido removido: força reconexão na próxima vez
             throw e
         }

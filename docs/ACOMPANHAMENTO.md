@@ -1,6 +1,6 @@
 # Documento de acompanhamento — BootForge
 
-Última atualização: 18/11/2026 · Versão do app: **0.5.0**
+Última atualização: 18/11/2026 · Versão do app: **0.6.0**
 
 Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular real · 🟡 pendente · ⛔ limitação técnica
 
@@ -14,7 +14,7 @@ Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular
 | 4 | Ventoy completo | ✅ Concluída no núcleo e na interface (🧪 falta teste no celular) |
 | 5 | Editor de ISO | ✅ Concluída no núcleo e na interface (🧪 falta teste no celular) |
 | 6 | Catálogo e downloads | ✅ Concluída no núcleo e na interface (🧪 falta teste no celular) |
-| 7 | Testes e estabilidade | 🟡 Pendente |
+| 7 | Testes e estabilidade | ✅ Parte automatizada concluída (injeção de falhas, captura de logs); 🧪 **testes em hardware real pendentes** |
 
 ## 1. Funcionalidades implementadas
 
@@ -44,6 +44,8 @@ Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular
 | **Downloads**: retomada (Range/If-Range), retomada automática após queda, pausa (inclusive fechando o app), cancelamento, tamanho e checksum conferidos, arquivo adulterado apagado | ✅ | Servidor local simulando quedas, arquivo alterado, Range ignorado; **download real do Alpine com pausa/retomada e SHA-512 conferido** |
 | Biblioteca de imagens (reutilizar sem baixar de novo) e verificação de ISO baixada pelo navegador | ✅ | Testes |
 | Catálogo atualizável sem reconstruir o app (`catalog.json` validado) | ✅ | Testes de catálogo inválido |
+| **Estabilidade (injeção de falhas)**: pendrive arrancado no meio da instalação/atualização do Ventoy, da cópia para o exFAT, da gravação DD/FAT32; destino cheio no editor; ISO cortada; falta de espaço no download | ✅ | `FaultInjectingBlockDevice` + testes em 4 módulos ([05-testes-e-estabilidade.md](05-testes-e-estabilidade.md)) |
+| Pendrive falsificado (devolve outro conteúdo) detectado pela verificação | ✅ | Teste "pendrive que mente" |
 | Ventoy: instalar (MBR/GPT, 4K, reserva, **com ou sem Secure Boot**), detectar, atualizar | ✅ | Boot QEMU BIOS/UEFI; comparação com o instalador oficial |
 | Catálogo de imagens com as regras oficiais do menu | ✅ | `.ventoyignore`, 32 KiB, lixeiras, `._`, pasta de busca, profundidade, FILE_FLT, wim/vhd, listas branca/negra |
 | `ventoy.json`: esquema dos 15 plugins e 25 opções, validação, backups, restauração | ✅ | Exemplo oficial; menu do QEMU mostrou apelido e contagem configurados |
@@ -70,6 +72,7 @@ Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular
 | **Editor de ISO**: abrir do celular/pendrive (seletor do Android), navegar, pesquisar, seleção múltipla, ver/editar texto, visualizador hexadecimal, propriedades, adicionar/substituir/renomear/mover/copiar/excluir, desfazer/refazer, alterações pendentes, gerar nova ISO (2 modos) com validação, extrair, copiar original, excluir original só após confirmação | 🧪 (captura ✅) |
 | **Catálogo**: consultar versões, selo de verificação, baixar, página oficial; Windows pelo navegador + verificação | 🧪 (captura ✅) |
 | **Downloads**: fila, progresso/velocidade/tempo restante, pausar/continuar/cancelar, notificação em segundo plano; biblioteca com Gravar, Copiar para o Ventoy, Abrir no editor, Salvar no celular, Excluir | 🧪 (captura ✅) |
+| **Logs e diagnóstico**: log contínuo em arquivo com rotação, travamentos gravados e oferecidos na próxima abertura, botão *Enviar log do erro* nas falhas, tela Logs (compartilhar, salvar .txt, copiar, limpar, log detalhado SCSI) | 🧪 (captura ✅) |
 | Diagnóstico (Etapas 1–2): teste de leitura, gravação RAW + verificação, setor 0 | 🧪 |
 
 ## 2. Pendências
@@ -80,7 +83,7 @@ Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular
 | 4 (restos) | ext4/xfs/criptografia na persistência; VentoyVlnk; plugins com sufixo de arquitetura no editor visual (hoje: modo Avançado); pré-visualização com 9-slice completo |
 | 5 (restos) | Recriar a tabela híbrida também na reconstrução completa; editar ISOs com `rr_moved` (pastas muito profundas); salvar a sessão para continuar depois de fechar o app |
 | 6 (restos) | Assinatura do Fedora (arquivo CHECKSUM assinado) e do Alpine (.asc); lista de hashes oficiais do Windows no catálogo (hoje o usuário cola); vários downloads ao mesmo tempo |
-| 7 | Matriz de celulares × pendrives; driver SCSI próprio (READ(16), várias LUNs) |
+| 7 (restos) | **Matriz de celulares × pendrives em hardware real** (depende de você); driver SCSI próprio (READ(16), várias LUNs) |
 
 ## 3. Limitações técnicas conhecidas
 
@@ -111,7 +114,7 @@ Ver [`03-arquitetura.md`](03-arquitetura.md#dependências) e [`THIRD_PARTY_LICEN
 
 | Teste | Resultado |
 |---|---|
-| `./gradlew test` + capturas (inclui a ISO real do Alpine nos 2 modos) | ✅ 0 falhas |
+| `./gradlew test` + capturas — **121 execuções** (99 testes + 11 capturas × 2) | ✅ 0 falhas |
 | Etapa 6 ao vivo: 14 fontes consultadas; Ubuntu, Debian e Mint com assinatura válida; download real do Alpine pausado, retomado e verificado | ✅ (`BOOTFORGE_LIVE=1`) |
 | Etapa 5 no QEMU: Alpine editado (Preservar) como pendrive e CD em BIOS e UEFI; boot completo até o login; reconstrução completa como CD até o login; imagem de boot realocada iniciando pelo MBR GRUB2 e pelo El Torito | ✅ (`docs/img/e5-*.png`) |
 | Etapa 5: ISO UDF reconstruída montada pelo driver UDF do kernel Linux (SHA-256 de 246 arquivos; diferenças só nas edições) | ✅ (`docs/img/e5-udf-linux-kernel.log`) |
@@ -124,13 +127,16 @@ Ver [`03-arquitetura.md`](03-arquitetura.md#dependências) e [`THIRD_PARTY_LICEN
 | QEMU: ISO real copiada pelo BootForge **deu boot** (GRUB da ISO) | ✅ (`docs/img/qemu-e4-iso-booted.png`) |
 | QEMU: apelido (`menu_alias`) e contagem (`VTOY_MENU_TIMEOUT`) gravados pelo BootForge | ✅ (`docs/img/qemu-e4-alias-menu.png`) |
 | QEMU: tema aplicado pelo BootForge | ✅ (`docs/img/qemu-e4-theme.png`) |
-| `assembleRelease` (R8) | ✅ APK 19,6 MB (0.5.0; +Bouncy Castle) |
+| `assembleRelease` (R8) | ✅ APK 19,6 MB (0.6.0) |
 | **Celular real** | ⏳ aguardando ([roteiro](ROTEIRO-TESTES-REAIS.md)) |
 
 ## 6. Problemas encontrados e resolvidos
 
 | Problema | Solução |
 |---|---|
+| No exFAT, erro ao finalizar escondia o erro original (pendrive arrancado) | Erro original mantido; o da finalização vai como "suprimido" |
+| Download começava mesmo sem espaço e falhava no meio | Verificação de espaço livre antes de começar, com mensagem "faltam X MB" |
+| Destaques com asteriscos apareciam literalmente nas telas | Negrito de verdade (`BoldLead`) |
 | `mirrors.kernel.org` alterna 503/conexão derrubada | Usar o destino oficial do redirecionamento (`mirrors.edge.kernel.org`), novas tentativas automáticas e cache por consulta (não pede o mesmo arquivo duas vezes) |
 | GitHub bloqueado no ambiente de desenvolvimento (403) | Resolvedor testado com respostas simuladas; no celular usa a API pública normalmente |
 | Conflito de empacotamento do Bouncy Castle no APK | Exclusão do `MANIFEST.MF` OSGi repetido; R8 mantém o pacote inteiro (+1,2 MB) para a verificação não quebrar no celular |
@@ -149,5 +155,6 @@ Ver [`03-arquitetura.md`](03-arquitetura.md#dependências) e [`THIRD_PARTY_LICEN
 
 ## 7. Próximas etapas
 
-1. **Você:** testar o APK 0.5.0 seguindo o [roteiro](ROTEIRO-TESTES-REAIS.md) (Etapas 2 a 6).
-2. Etapa 7 — Testes e estabilidade (com os resultados do seu celular).
+1. **Você:** testar o APK 0.6.0 seguindo o [roteiro](ROTEIRO-TESTES-REAIS.md); a cada erro, enviar o **relatório de log**.
+2. Corrigir o que aparecer no hardware real e preencher a matriz de compatibilidade.
+3. Com os testes reais aprovados: versão **1.0.0**.

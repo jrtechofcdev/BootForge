@@ -1,7 +1,16 @@
 # Roteiro de testes em hardware real (celular + pendrive)
 
-Este roteiro valida a prova de conceito no **seu** aparelho. Leva cerca de 20 minutos.
-Anote os resultados na tabela do final e me envie (ou cole no `docs/ACOMPANHAMENTO.md`).
+Este roteiro valida o BootForge no **seu** aparelho. Faça na ordem que preferir; cada bloco é
+independente. Anote os resultados na tabela do final e me envie.
+
+## ⚠️ Como enviar o log quando algo der errado
+
+1. **Se uma operação falhar:** no painel do erro, toque em **Enviar log do erro** → escolha o WhatsApp (ou e-mail) → envie o arquivo `bootforge-log-….txt`.
+2. **Se o app fechar sozinho:** abra o BootForge de novo → aparece *"O BootForge fechou inesperadamente"* → **Enviar relatório**.
+3. **Se algo estiver estranho, mas sem erro:** tela inicial → **Logs** → **Compartilhar** (ou **Salvar .txt**).
+4. **Para um erro que se repete:** em **Logs**, ligue **Log detalhado**, repita o que deu errado e depois compartilhe. Desligue em seguida (ele deixa a gravação mais lenta).
+
+*Informação importante:* o relatório não inclui seus arquivos nem contas; o número de série do pendrive aparece mascarado. Junto com o arquivo, conte em uma frase **o que você estava fazendo**.
 
 ## O que você precisa
 
@@ -15,7 +24,7 @@ Anote os resultados na tabela do final e me envie (ou cole no `docs/ACOMPANHAMEN
 
 ## Instalação do app
 
-1. Copie o arquivo `BootForge-0.5.0.apk` para o celular.
+1. Copie o arquivo `BootForge-0.6.0.apk` para o celular (pode instalar por cima da versão anterior).
 2. Toque nele e permita "instalar apps desconhecidos" para o gerenciador de arquivos.
 3. Abra o **BootForge**.
 
@@ -139,6 +148,15 @@ Use o pendrive com Ventoy do passo 4. Abra **Ventoy** na tela inicial — aparec
 | 40 | Biblioteca → *Gravar no pendrive* / *Copiar para o Ventoy* / *Abrir no editor* | Escolha cada ação | Abre a tela certa já com a imagem escolhida |
 | 41 | Catálogo → **Windows 11** → *Abrir site oficial* | Baixe pelo navegador → Downloads → *Verificar um arquivo* → cole o SHA-256 da página da Microsoft | "Checksum confere ✓" |
 
+## Etapa 7 — Estabilidade e logs (passos 42 a 45)
+
+| Passo | O que fazer | Esperado |
+|---|---|---|
+| 42 | Tela inicial → **Logs** → *Compartilhar* → envie para você mesmo no WhatsApp | Chega um arquivo `bootforge-log-….txt` com o modelo do celular e o pendrive conectado |
+| 43 | Comece uma gravação (pendrive de teste) e **arranque o pendrive no meio** | Painel mostra **FALHOU** (nunca "concluído") e o botão **Enviar log do erro**; o log mostra "Removido" e a falha de gravação |
+| 44 | Reconecte e repita a gravação | Funciona normalmente |
+| 45 | Teste com **outros pendrives** (marcas e tamanhos diferentes) o que conseguir: inspecionar, teste de leitura, instalar Ventoy | Preencha a matriz em `docs/05-testes-e-estabilidade.md` |
+
 ## Tabela de resultados
 
 | Item | Resultado (OK / falhou + mensagem) |
@@ -170,3 +188,6 @@ Use o pendrive com Ventoy do passo 4. Abra **Ventoy** na tela inicial — aparec
 | 36–38. Download, pausa, retomada, queda de rede | |
 | 39–40. Biblioteca e integrações | |
 | 41. Windows pelo navegador + verificação | |
+| 42. Relatório de log chegou no WhatsApp | |
+| 43–44. Pendrive arrancado: falha clara + log; repetir funciona | |
+| 45. Outros pendrives (marca/GB: resultado) | |

@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import dev.bootforge.integrity.Diag
 
 /** Informações de um pendrive conectado (somente o que o Android realmente informa). */
 data class UsbDriveInfo(
@@ -50,12 +51,16 @@ class UsbDriveManager(context: Context) {
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
+            @Suppress("DEPRECATION")
+            val dev: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
+            val id = dev?.let { "%04X:%04X %s".format(it.vendorId, it.productId, it.deviceName) } ?: "?"
             when (intent.action) {
-                UsbManager.ACTION_USB_DEVICE_ATTACHED -> _events.value = "Dispositivo USB conectado"
-                UsbManager.ACTION_USB_DEVICE_DETACHED -> _events.value = "Dispositivo USB removido"
+                UsbManager.ACTION_USB_DEVICE_ATTACHED -> { _events.value = "Dispositivo USB conectado"; Diag.i("USB", "Conectado: $id ${dev?.let(::interfaces) ?: ""}") }
+                UsbManager.ACTION_USB_DEVICE_DETACHED -> { _events.value = "Dispositivo USB removido"; Diag.w("USB", "Removido: $id") }
                 ACTION_USB_PERMISSION -> {
                     val granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
                     _events.value = if (granted) "Permissão USB concedida" else "Permissão USB negada"
+                    Diag.i("USB", "Permissão ${if (granted) "concedida" else "NEGADA"}: $id")
                 }
             }
             refresh()
@@ -118,8 +123,29 @@ class UsbDriveManager(context: Context) {
 
     /** Abre o pendrive para acesso por setores. Lembre-se de fechar ([UsbBlockDevice.close]). */
     fun open(deviceName: String, readOnly: Boolean): UsbBlockDevice {
-        val device = findDevice(deviceName) ?: throw java.io.IOException("Pendrive não está mais conectado")
-        return UsbBlockDevice.open(usbManager, device, readOnly)
+        val device = findDevice(deviceName) ?: throw java.io.IOException("Pendrive não está mais conectado").also { Diag.w("USB", "Abrir $deviceName: não está mais conectado") }
+        val info = describe(device)
+        Diag.i("USB", "Abrindo ${"%04X:%04X".format(device.vendorId, device.productId)} \"${info.displayName}\" série ${Diag.mask(info.serial)} ${if (readOnly) "(somente leitura)" else "(leitura e escrita)"}")
+        return try {
+            UsbBlockDevice.open(usbManager, device, readOnly).also { d ->
+                Diag.i("USB", "Pronto: setor ${d.blockSize} bytes × ${d.blockCount} setores = ${d.blockCount * d.blockSize} bytes")
+            }
+        } catch (e: Exception) {
+            Diag.e("USB", "Falha ao abrir o pendrive ${info.displayName}", e)
+            throw e
+        }
+    }
+
+    /** Descrição técnica das interfaces USB (classe/subclasse/protocolo e endpoints), para o log. */
+    fun interfaces(d: UsbDevice): String = (0 until d.interfaceCount).joinToString(" ") { i ->
+        val f = d.getInterface(i)
+        "[if$i classe=${f.interfaceClass} sub=${f.interfaceSubclass} prot=0x%02X ep=${f.endpointCount}]".format(f.interfaceProtocol)
+    }
+
+    /** Resumo de todos os dispositivos USB vistos pelo Android (para o relatório de diagnóstico). */
+    fun describeAll(): List<String> = usbManager.deviceList.values.map { d ->
+        val info = describe(d)
+        "%04X:%04X %s \"%s\" série %s permissão=%s %s".format(d.vendorId, d.productId, d.deviceName, info.displayName, Diag.mask(info.serial), info.hasPermission, interfaces(d))
     }
 
     companion object {

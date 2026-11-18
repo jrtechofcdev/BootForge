@@ -47,6 +47,10 @@ class DownloadControl : CancellationSignal() {
     override fun cancel() { hardCancel.cancel(); super.cancel() }
 }
 
+/** Não há espaço livre suficiente para terminar o download. */
+class InsufficientSpaceException(val needed: Long, val free: Long) :
+    IOException("Espaço insuficiente no celular: faltam ${(needed - free + 1048575) / 1048576} MB (necessário ${needed / 1048576} MB, livre ${free / 1048576} MB). Libere espaço e toque em Continuar.")
+
 /** Download pausado: o .part fica guardado para continuar depois. */
 class DownloadPausedException(val bytes: Long) : IOException("Download pausado")
 
@@ -60,7 +64,13 @@ class DownloadPausedException(val bytes: Long) : IOException("Download pausado")
  *
  * Arquivos: "<nome>.part" (dados) e "<nome>.part.json" (de onde veio e como retomar).
  */
-class Downloader(private val dir: File, private val http: UrlConnectionHttp = UrlConnectionHttp(), private val autoRetries: Int = 5) {
+class Downloader(
+    private val dir: File,
+    private val http: UrlConnectionHttp = UrlConnectionHttp(),
+    private val autoRetries: Int = 5,
+    /** Espaço livre na pasta de destino (substituível nos testes). */
+    private val freeSpace: (File) -> Long = { it.usableSpace },
+) {
 
     init { dir.mkdirs() }
 
@@ -95,6 +105,8 @@ class Downloader(private val dir: File, private val http: UrlConnectionHttp = Ur
             } catch (e: OperationCancelledException) {
                 if (control.paused) throw DownloadPausedException(part.length())
                 part.delete(); metaFile(req.fileName).delete()
+                throw e
+            } catch (e: InsufficientSpaceException) {
                 throw e
             } catch (e: HttpException) {
                 if (e.code < 500 || ++failures > autoRetries) throw e
@@ -159,6 +171,10 @@ class Downloader(private val dir: File, private val http: UrlConnectionHttp = Ur
             }
             if (total <= 0) throw IOException("O servidor não informou o tamanho do arquivo")
             req.expectedSize?.let { if (it != total) throw IOException("Tamanho no servidor ($total) diferente do oficial ($it): download recusado") }
+            // falta de espaço: avisa ANTES de começar (com folga de 64 MB para o sistema)
+            val need = total - offset + (64L shl 20)
+            val free = freeSpace(dir)
+            if (free < need) throw InsufficientSpaceException(need, free)
             writeMeta(req.fileName, req.url, c.url.toString(), c.getHeaderField("ETag"), c.getHeaderField("Last-Modified"), total)
 
             val buf = ByteArray(256 * 1024)

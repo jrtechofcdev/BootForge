@@ -18,6 +18,10 @@ import dev.bootforge.app.ui.ImageFile
 import dev.bootforge.app.data.OperationState
 import dev.bootforge.app.ui.screens.DriveDetails
 import dev.bootforge.app.ui.screens.HomeContent
+import dev.bootforge.app.ui.screens.LogsActions
+import dev.bootforge.app.ui.screens.LogsContent
+import dev.bootforge.app.data.LogLine
+import dev.bootforge.integrity.Diag
 import dev.bootforge.app.ui.screens.CatalogActions
 import dev.bootforge.app.ui.screens.CatalogContent
 import dev.bootforge.app.ui.screens.DownloadsActions
@@ -191,6 +195,26 @@ class ScreenshotTest {
 
     @Test
     fun downloads() = paparazzi.snapshot { Screen { DownloadsContent(centerState(), "/storage/emulated/0/Android/data/dev.bootforge.app/files/isos · livre: 41,2 GB", DownloadsActions()) } }
+
+    /**
+     * Tela de logs. As linhas usam exatamente as mensagens que o app registra (UsbDriveManager,
+     * OperationRunner, UsbBlockDevice) num cenário de exemplo: pendrive removido durante uma gravação.
+     */
+    @Test
+    fun logs() {
+        val t = 1_795_000_000_000
+        val lines = listOf(
+            LogLine(t, Diag.Level.INFO, "USB", "Conectado: 0781:5583 /dev/bus/usb/001/002 [if0 classe=8 sub=6 prot=0x50 ep=2]"),
+            LogLine(t + 2_000, Diag.Level.INFO, "USB", "Abrindo 0781:5583 \"SanDisk Ultra Fit\" série •••••••0001 (leitura e escrita)"),
+            LogLine(t + 2_400, Diag.Level.INFO, "USB", "Pronto: setor 512 bytes × 30031872 setores = 15376318464 bytes"),
+            LogLine(t + 5_000, Diag.Level.INFO, "Operação", "INÍCIO: Gravar ISO: debian-13.7.0-amd64-netinst.iso — SanDisk Ultra Fit"),
+            LogLine(t + 5_100, Diag.Level.INFO, "Operação", "Etapa 1/1: Imagem direta (DD)"),
+            LogLine(t + 61_000, Diag.Level.WARN, "USB", "Removido: 0781:5583 /dev/bus/usb/001/002"),
+            LogLine(t + 61_050, Diag.Level.ERROR, "SCSI", "Falha de GRAVAÇÃO no LBA 1048576 (2048 setores)\njava.io.IOException: Could not write to device, result == -1 errno 19 No such device"),
+            LogLine(t + 61_100, Diag.Level.ERROR, "Operação", "FALHOU: Gravar ISO: debian-13.7.0-amd64-netinst.iso — Falha de leitura/gravação ou pendrive desconectado (progresso: 536870912/792723456 bytes, etapa: Imagem direta (DD))"),
+        ).reversed()
+        paparazzi.snapshot { Screen { LogsContent(lines, 184_320, 0, false, null, null, LogsActions()) } }
+    }
 
     @Test
     fun home() = paparazzi.snapshot { Screen { HomeContent(driveCount = 1, onNavigate = {}) } }

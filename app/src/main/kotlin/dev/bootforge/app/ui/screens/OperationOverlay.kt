@@ -1,5 +1,7 @@
 package dev.bootforge.app.ui.screens
 
+import kotlinx.coroutines.launch
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -56,12 +58,19 @@ fun OperationOverlay(vm: AppViewModel, op: OperationState) {
         onDispose { view.keepScreenOn = false }
     }
     BackHandler(enabled = true) { if (!running) vm.dismissOperation() }
-    OperationContent(op, onCancel = vm::cancelOperation, onClose = vm::dismissOperation)
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    OperationContent(op, onCancel = vm::cancelOperation, onClose = vm::dismissOperation, onShareLog = {
+        scope.launch {
+            val f = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { dev.bootforge.app.data.LogExport.writeFile(ctx) }.getOrNull() }
+            if (f != null) runCatching { ctx.startActivity(dev.bootforge.app.data.LogExport.shareIntent(ctx, f)) }
+        }
+    })
 }
 
 /** Parte visual do painel (sem estado) — também usada nas capturas de tela de teste. */
 @Composable
-fun OperationContent(op: OperationState, onCancel: () -> Unit, onClose: () -> Unit) {
+fun OperationContent(op: OperationState, onCancel: () -> Unit, onClose: () -> Unit, onShareLog: () -> Unit = {}) {
     val running = op.status == OperationState.Status.RUNNING
     Box(Modifier.fillMaxSize().background(BfColors.Background.copy(alpha = 0.92f)), contentAlignment = Alignment.Center) {
         Column(
@@ -121,6 +130,9 @@ fun OperationContent(op: OperationState, onCancel: () -> Unit, onClose: () -> Un
             if (running) {
                 OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) { Text("Cancelar") }
             } else {
+                if (op.status == OperationState.Status.FAILED) {
+                    OutlinedButton(onClick = onShareLog, modifier = Modifier.fillMaxWidth()) { Text("Enviar log do erro") }
+                }
                 Button(
                     onClick = onClose,
                     modifier = Modifier.fillMaxWidth(),

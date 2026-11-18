@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.IOException
+import dev.bootforge.integrity.Diag
 
 /** Estado de uma operação longa (sempre com dados REAIS de progresso). */
 data class OperationState(
@@ -67,18 +68,25 @@ class OperationRunner(private val app: Application, private val history: History
         if (isBusy) return false
         val c = CancellationSignal().also { cancel = it }
         _state.value = OperationState(title, deviceLabel)
+        Diag.i("Operação", "INÍCIO: $title — $deviceLabel")
         OperationService.start(app)
         val observer = object : OperationObserver {
             override fun onStep(step: InstallStep, index: Int, total: Int) = step(step.label, index, total)
-            override fun step(label: String, index: Int, total: Int) =
+            override fun step(label: String, index: Int, total: Int) {
+                Diag.i("Operação", "Etapa ${index + 1}/$total: $label")
                 _state.update { it?.copy(step = label, stepIndex = index, stepCount = total, progress = null) }
+            }
             override fun onProgress(progress: Progress) = _state.update { it?.copy(progress = progress) }
-            override fun onLog(message: String) = _state.update { it?.copy(logs = it.logs + message) }
+            override fun onLog(message: String) {
+                Diag.i("Operação", message)
+                _state.update { it?.copy(logs = it.logs + message) }
+            }
         }
         scope.launch {
             val (status, message) = try {
                 OperationState.Status.SUCCESS to block(c, observer)
             } catch (e: OperationCancelledException) {
+                Diag.w("Operação", "CANCELADA: $title")
                 OperationState.Status.CANCELLED to "Operação cancelada. O que já tinha sido concluído foi mantido; o item em andamento foi descartado."
             } catch (e: Throwable) {
                 val reason = when (e) {
@@ -87,8 +95,10 @@ class OperationRunner(private val app: Application, private val history: History
                     is OutOfMemoryError -> "Memória insuficiente no aparelho"
                     else -> e.message ?: e.javaClass.simpleName
                 }
+                Diag.e("Operação", "FALHOU: $title — $reason (progresso: ${_state.value?.progress?.let { "${it.bytesDone}/${it.bytesTotal} bytes" } ?: "-"}, etapa: ${_state.value?.step})", e)
                 OperationState.Status.FAILED to reason
             }
+            if (status == OperationState.Status.SUCCESS) Diag.i("Operação", "CONCLUÍDA: $title — $message")
             _state.update { it?.copy(status = status, result = message) }
             history.add(HistoryEntry(System.currentTimeMillis(), title, deviceLabel, status == OperationState.Status.SUCCESS, message))
             _finished.tryEmit(deviceName)

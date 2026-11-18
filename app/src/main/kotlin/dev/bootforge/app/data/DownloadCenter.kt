@@ -33,6 +33,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import java.io.File
+import dev.bootforge.integrity.Diag
 
 enum class JobStatus(val label: String) { QUEUED("Na fila"), RUNNING("Baixando"), PAUSED("Pausado"), FAILED("Falhou") }
 
@@ -108,6 +109,8 @@ class DownloadCenter(private val app: Application) {
             async {
                 gate.withPermit {
                     val r = runCatching { resolvers.resolve(sys) }
+                    r.onSuccess { Diag.i("Catálogo", "${sys.id}: ${it.version} ${it.verification.name} ${it.downloadUrl ?: "(navegador)"}") }
+                        .onFailure { Diag.w("Catálogo", "${sys.id}: falha na consulta", it) }
                     _state.update { s ->
                         s.copy(entries = s.entries + (sys.id to EntryState(sys, r.getOrNull(), r.exceptionOrNull()?.let { it.message ?: it.javaClass.simpleName }, false)))
                     }
@@ -128,7 +131,7 @@ class DownloadCenter(private val app: Application) {
             synchronized(keys) { keys.clear() }
             _state.update { s -> CenterState(def, "atualizado em ${def.updated}", def.systems.associate { it.id to EntryState(it) }, s.jobs, s.library) }
             "Catálogo atualizado para ${def.updated} (${def.systems.size} sistemas)."
-        }.getOrElse { "Não foi possível atualizar o catálogo: ${it.message}. Continua valendo o catálogo atual." }
+        }.getOrElse { Diag.w("Catálogo", "Atualização do catalog.json falhou ($catalogUrl)", it); "Não foi possível atualizar o catálogo: ${it.message}. Continua valendo o catálogo atual." }
         say(msg)
     }
 
@@ -139,6 +142,7 @@ class DownloadCenter(private val app: Application) {
         library.find(req.systemId, req.version, req.checksum)?.let { say("\"${it.title} ${it.version ?: ""}\" já está na biblioteca: não é preciso baixar de novo."); return }
         if (_state.value.jobs.any { it.req.fileName == req.fileName }) { resume(req.fileName); return }
         File(dir, "${req.fileName}.req.json").writeText(DownloadRequestJson.encode(req))
+        Diag.i("Download", "Na fila: ${req.fileName} (${req.expectedSize ?: "?"} bytes) de ${req.url} — ${req.verification.name}")
         _state.update { it.copy(jobs = it.jobs + JobState(req, JobStatus.QUEUED, downloader.partialBytes(req))) }
         queue.trySend(req.fileName)
         DownloadService.start(app)
@@ -168,19 +172,24 @@ class DownloadCenter(private val app: Application) {
         val job = _state.value.jobs.firstOrNull { it.req.fileName == name } ?: return
         if (job.status != JobStatus.QUEUED) return
         val control = DownloadControl().also { controls[name] = it }
+        Diag.i("Download", "Início/retomada: $name a partir de ${downloader.partialBytes(job.req)} bytes; livre: ${dir.usableSpace} bytes")
         setJob(name) { it.copy(status = JobStatus.RUNNING, message = null) }
         try {
             val item = downloader.download(job.req, library, { p -> setJob(name) { it.copy(progress = p, bytes = p.bytesDone) } }, control)
             File(dir, "$name.req.json").delete()
             _state.update { s -> s.copy(jobs = s.jobs.filter { it.req.fileName != name }, library = library.items()) }
+            Diag.i("Download", "Concluído: $name — ${item.status.name}, SHA-256 ${item.sha256}")
             AppGraph.history.add(HistoryEntry(System.currentTimeMillis(), "Download: ${item.title} ${item.version ?: ""}", "Catálogo", true, item.status.label))
             say("${item.title} ${item.version ?: ""} baixado. ${item.status.label}.")
         } catch (e: DownloadPausedException) {
+            Diag.i("Download", "Pausado: $name com ${e.bytes} bytes")
             setJob(name) { it.copy(status = JobStatus.PAUSED, bytes = e.bytes, progress = null) }
         } catch (e: OperationCancelledException) {
+            Diag.i("Download", "Cancelado: $name")
             File(dir, "$name.req.json").delete()
             _state.update { s -> s.copy(jobs = s.jobs.filter { it.req.fileName != name }) }
         } catch (e: Exception) {
+            Diag.e("Download", "FALHOU: $name", e)
             setJob(name) { it.copy(status = JobStatus.FAILED, message = e.message ?: e.javaClass.simpleName, progress = null, bytes = downloader.partialBytes(it.req)) }
             AppGraph.history.add(HistoryEntry(System.currentTimeMillis(), "Download: ${job.req.title}", "Catálogo", false, e.message ?: ""))
         } finally {

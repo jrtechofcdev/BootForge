@@ -85,7 +85,7 @@ fun HistoryScreen(vm: AppViewModel, onBack: () -> Unit) {
 
 /** Sobre, integridade do pacote embutido, licenças e limitações conhecidas. */
 @Composable
-fun SettingsScreen(vm: AppViewModel, onBack: () -> Unit) {
+fun SettingsScreen(vm: AppViewModel, onBack: () -> Unit, onLogs: () -> Unit = {}) {
     val check by vm.packageCheck.collectAsStateWithLifecycle()
     val ctx = androidx.compose.ui.platform.LocalContext.current
     val appVersion = remember {
@@ -107,6 +107,10 @@ fun SettingsScreen(vm: AppViewModel, onBack: () -> Unit) {
                 Text("Confere o SHA-256 dos componentes originais do Ventoy embutidos no app.", style = MaterialTheme.typography.bodySmall, color = BfColors.TextDim)
                 Button(onClick = vm::checkEmbeddedPackage, modifier = Modifier.fillMaxWidth()) { Text("Verificar agora") }
                 check?.let { Notice(it, if (it.startsWith("PROBLEMA")) BfColors.Danger else BfColors.Success) }
+            }
+            SectionCard(title = "Logs e diagnóstico", icon = Icons.Filled.Info) {
+                Text("Se algo der errado, gere o relatório de diagnóstico e envie para análise.", style = MaterialTheme.typography.bodySmall, color = BfColors.TextDim)
+                Button(onClick = onLogs, modifier = Modifier.fillMaxWidth()) { Text("Abrir logs e diagnóstico") }
             }
             SectionCard(title = "Licenças", icon = Icons.Filled.Gavel) {
                 License("BootForge", "GNU GPL v3")

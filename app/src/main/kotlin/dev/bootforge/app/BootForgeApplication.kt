@@ -7,6 +7,8 @@ import dev.bootforge.app.data.AppGraph
 class BootForgeApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        // Primeiro o log: assim até um erro durante a inicialização fica registrado.
+        dev.bootforge.app.data.AppLog.install(this)
         AppGraph.init(this)
     }
 }

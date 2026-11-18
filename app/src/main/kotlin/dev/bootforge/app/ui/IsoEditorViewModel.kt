@@ -127,6 +127,7 @@ class IsoEditorViewModel(app: Application) : AndroidViewModel(app) {
                 _ui.value = EditorUi(summary = summary)
                 refresh()
             } catch (e: Exception) {
+                dev.bootforge.integrity.Diag.e("Editor", "Falha ao abrir $name", e)
                 close()
                 _ui.value = EditorUi(error = "Não foi possível abrir $name: ${e.message ?: e.javaClass.simpleName}")
             }
@@ -198,6 +199,7 @@ class IsoEditorViewModel(app: Application) : AndroidViewModel(app) {
             refresh()
             msg?.let { m -> _ui.update { it.copy(message = m) } }
         } catch (e: Exception) {
+            dev.bootforge.integrity.Diag.w("Editor", "Edição recusada: ${e.message}")
             _ui.update { it.copy(message = e.message ?: e.javaClass.simpleName) }
         }
     }

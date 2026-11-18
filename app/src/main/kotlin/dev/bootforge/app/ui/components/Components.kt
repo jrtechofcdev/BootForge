@@ -190,3 +190,15 @@ fun Notice(text: String, color: Color = BfColors.Warning, icon: ImageVector? = n
         Text(text, style = MaterialTheme.typography.bodyMedium, color = BfColors.Text, fontWeight = FontWeight.Normal)
     }
 }
+
+/** Texto com um início em negrito (ex.: "Privacidade:" + explicação). */
+@Composable
+fun BoldLead(lead: String, rest: String, style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodySmall) {
+    Text(
+        androidx.compose.ui.text.buildAnnotatedString {
+            pushStyle(androidx.compose.ui.text.SpanStyle(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)); append(lead); pop()
+            append(" "); append(rest)
+        },
+        style = style,
+    )
+}

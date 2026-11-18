@@ -379,10 +379,16 @@ class ExFatVolume private constructor(private val dev: BlockDevice, val isWritab
     private inline fun <T> mutation(block: () -> T): T {
         requireWritable()
         markDirty()
+        var primary: Throwable? = null
         try {
             return block()
+        } catch (t: Throwable) {
+            primary = t
+            throw t
         } finally {
-            flush()
+            // Se a operação já falhou (ex.: pendrive removido), um erro ao finalizar não pode
+            // esconder o erro original — ele vai junto como "suprimido".
+            try { flush() } catch (f: Throwable) { if (primary != null) primary.addSuppressed(f) else throw f }
         }
     }
 

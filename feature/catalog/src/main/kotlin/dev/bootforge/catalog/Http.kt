@@ -1,5 +1,6 @@
 package dev.bootforge.catalog
 
+import dev.bootforge.integrity.Diag
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
@@ -49,6 +50,7 @@ class UrlConnectionHttp(
                 if (e.code < 500) throw e
                 last = e
             } catch (e: IOException) { last = e }
+            Diag.w("HTTP", "Tentativa ${attempt + 1}/$RETRIES falhou: ${last?.message}")
             Thread.sleep(1000L shl attempt)
         }
         throw last!!

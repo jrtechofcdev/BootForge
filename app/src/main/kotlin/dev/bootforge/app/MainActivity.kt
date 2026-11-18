@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -48,6 +49,7 @@ object Routes {
     const val ISO_WRITER = "iso-writer"
     const val ISO_EDITOR = "iso-editor"
     const val CATALOG = "catalog"
+    const val LOGS = "logs"
     const val DOWNLOADS = "downloads"
     fun isoWriter(uri: Uri) = "iso-writer?uri=${Uri.encode(uri.toString())}"
     fun isoEditor(uri: Uri) = "iso-editor?uri=${Uri.encode(uri.toString())}"
@@ -113,6 +115,7 @@ fun BootForgeApp(vm: AppViewModel = viewModel()) {
             composable("${Routes.ISO_EDITOR}?uri={uri}", arguments = listOf(optionalArg("uri"))) { entry ->
                 IsoEditorScreen(viewModel<IsoEditorViewModel>(), onBack = { nav.popBackStack() }, initialUri = entry.arguments?.getString("uri")?.let(Uri::parse))
             }
+            composable(Routes.LOGS) { dev.bootforge.app.ui.screens.LogsScreen(onBack = { nav.popBackStack() }) }
             composable(Routes.CATALOG) {
                 CatalogScreen(viewModel<CatalogViewModel>(), onBack = { nav.popBackStack() }, onDownloads = { nav.navigate(Routes.DOWNLOADS) })
             }
@@ -124,12 +127,38 @@ fun BootForgeApp(vm: AppViewModel = viewModel()) {
                 )
             }
             composable(Routes.HISTORY) { HistoryScreen(vm, onBack = { nav.popBackStack() }) }
-            composable(Routes.SETTINGS) { SettingsScreen(vm, onBack = { nav.popBackStack() }) }
+            composable(Routes.SETTINGS) { SettingsScreen(vm, onBack = { nav.popBackStack() }, onLogs = { nav.navigate(Routes.LOGS) }) }
         }
         // Painel de progresso por cima de qualquer tela enquanto houver operação.
         operation?.let { OperationOverlay(vm, it) }
+        // O app fechou sozinho da última vez? Oferece enviar o relatório.
+        CrashNotice(onOpenLogs = { nav.navigate(Routes.LOGS) })
     }
 }
 
 /** Argumento opcional de rota (texto, pode faltar). */
 private fun optionalArg(name: String) = navArgument(name) { type = NavType.StringType; nullable = true; defaultValue = null }
+
+/** Aviso exibido quando há relatório de travamento ainda não visto. */
+@Composable
+private fun CrashNotice(onOpenLogs: () -> Unit) {
+    var crashes by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(dev.bootforge.app.data.AppLog.crashes().size) }
+    if (crashes == 0) return
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    fun seen() { dev.bootforge.app.data.AppLog.markCrashesSeen(); crashes = 0 }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = ::seen,
+        title = { androidx.compose.material3.Text("O BootForge fechou inesperadamente") },
+        text = { androidx.compose.material3.Text("Um relatório do erro foi guardado. Envie-o para análise: ele ajuda a corrigir o problema.") },
+        confirmButton = {
+            androidx.compose.material3.Button(onClick = {
+                seen()
+                runCatching { ctx.startActivity(dev.bootforge.app.data.LogExport.shareIntent(ctx, dev.bootforge.app.data.LogExport.writeFile(ctx))) }
+            }) { androidx.compose.material3.Text("Enviar relatório") }
+        },
+        dismissButton = {
+            androidx.compose.material3.TextButton(onClick = { seen(); onOpenLogs() }) { androidx.compose.material3.Text("Ver logs") }
+        },
+        containerColor = BfColors.Surface,
+    )
+}

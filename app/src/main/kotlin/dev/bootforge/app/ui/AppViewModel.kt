@@ -112,6 +112,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                     )
                 }
             } catch (e: Exception) {
+                dev.bootforge.integrity.Diag.e("Inspeção", "Falha ao ler o pendrive $deviceName", e)
                 InspectState.Failed(deviceName, e.message ?: e.javaClass.simpleName)
             }
         }

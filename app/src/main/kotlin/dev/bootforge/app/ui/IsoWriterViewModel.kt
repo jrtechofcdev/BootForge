@@ -64,6 +64,8 @@ class IsoWriterViewModel(app: Application) : AndroidViewModel(app) {
             val result = runCatching {
                 UriRandomReader.open(getApplication(), uri).use { IsoAnalyzer.analyze(name, it) }
             }
+            result.onSuccess { a -> dev.bootforge.integrity.Diag.i("Gravar ISO", "Análise de $name: ${a.info.format.label}, híbrida=${a.info.hybridMbr || a.info.hybridGpt}, Windows=${a.isWindows}, recomendado=${a.recommended}") }
+                .onFailure { dev.bootforge.integrity.Diag.e("Gravar ISO", "Falha ao analisar $name", it) }
             _ui.update { s ->
                 result.fold(
                     { a -> s.copy(source = IsoSource.Ready(uri, name, a), method = a.recommended, scheme = a.recommendedScheme) },

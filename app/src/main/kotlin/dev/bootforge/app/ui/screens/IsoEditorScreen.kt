@@ -257,10 +257,7 @@ fun IsoEditorContent(ui: EditorUi, actions: IsoEditorActions) {
                                 "Você pode navegar, ver e extrair arquivos (modo leitura) e também adicionar, substituir, renomear, mover e excluir (modo edição).",
                             style = MaterialTheme.typography.bodySmall, color = BfColors.TextDim,
                         )
-                        Text(
-                            "*A imagem original nunca é alterada:* as mudanças ficam pendentes (com desfazer/refazer) até você gerar uma NOVA ISO, que é validada no fim.",
-                            style = MaterialTheme.typography.bodySmall,
-                        )
+                        dev.bootforge.app.ui.components.BoldLead("A imagem original nunca é alterada:", "as mudanças ficam pendentes (com desfazer/refazer) até você gerar uma NOVA ISO, que é validada no fim.")
                         Button(onClick = actions.onOpen, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Filled.FolderOpen, null); Spacer(Modifier.width(8.dp)); Text("Abrir ISO") }
                     }
                 }

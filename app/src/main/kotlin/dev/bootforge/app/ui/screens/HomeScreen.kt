@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.EditNote
@@ -58,6 +59,7 @@ private val modules = listOf(
     Module("Pendrives", "Detectar, inspecionar e testar dispositivos", Icons.Filled.Usb, Routes.DRIVES, null),
     Module("Downloads", "Downloads com retomada e checksum", Icons.Filled.Download, Routes.DOWNLOADS, null),
     Module("Histórico", "Operações realizadas neste aparelho", Icons.Filled.History, Routes.HISTORY, null),
+    Module("Logs", "Diagnóstico e envio de relatório de erros", Icons.Filled.BugReport, Routes.LOGS, null),
     Module("Configurações", "Sobre, licenças e integridade", Icons.Filled.Settings, Routes.SETTINGS, null),
 )
 

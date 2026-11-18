@@ -7,7 +7,7 @@ via USB OTG, sem root e sem computador**.
 
 ![Telas do BootForge](docs/img/app-telas.png)
 
-> **Estado atual: 0.5.0 — Etapas 1 a 6 de 7 (gravação de ISOs, Ventoy, editor de ISO, catálogo e downloads).**
+> **Estado atual: 0.6.0 — as 7 etapas implementadas; falta o teste em celulares e pendrives reais para a 1.0.**
 > Tudo validado em discos virtuais com boot real no QEMU (BIOS e UEFI) e comparado com as
 > ferramentas oficiais do Ventoy. **Ainda não testado em celular real** — veja o
 > [roteiro de testes](docs/ROTEIRO-TESTES-REAIS.md). Status completo em
@@ -43,6 +43,8 @@ via USB OTG, sem root e sem computador**.
 - 🧰 **Ferramentas**: verificar instalação, Secure Boot liga/desliga, backup/restauração, persistência.
 - ⬆️ **Atualizações** do GitHub oficial com conferência de SHA-256 (sem apagar as ISOs).
 - 🔔 Operações longas em segundo plano com notificação de progresso.
+- 🪲 **Logs e diagnóstico**: log contínuo, relatório de travamentos e botão *Enviar log do erro* —
+  o relatório (.txt) pode ser compartilhado pelo WhatsApp ou e-mail. Veja [docs/05-testes-e-estabilidade.md](docs/05-testes-e-estabilidade.md).
 - 🧪 Diagnóstico: teste de velocidade de leitura e gravação RAW de imagem com verificação SHA-256.
 - 🛡️ Confirmações fortes (digitar `APAGAR`, conferência quando há vários pendrives) e progresso real.
 - 📜 Histórico local de operações.

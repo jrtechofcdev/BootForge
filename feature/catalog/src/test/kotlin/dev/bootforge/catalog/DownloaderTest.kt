@@ -152,6 +152,18 @@ class DownloaderTest {
         assertEquals(Hashing.hash(content), item.sha256) // o hash calculado fica registrado
     }
 
+    @Test
+    fun insufficientSpaceIsReportedBeforeDownloading() {
+        val e = assertFailsWith<InsufficientSpaceException> {
+            Downloader(dir, freeSpace = { 1_000_000L }).download(req(), Library(dir), ProgressListener.NONE, DownloadControl())
+        }
+        assertTrue(e.message!!.contains("Espaço insuficiente"), e.message)
+        assertEquals(1, requests.get(), "não deve tentar de novo sozinho quando falta espaço")
+        assertEquals(0L, Downloader(dir).partialBytes(req()))
+        // depois de liberar espaço, o download funciona
+        assertTrue(Downloader(dir).download(req(), Library(dir), ProgressListener.NONE, DownloadControl()).status.verified)
+    }
+
     /** Download REAL (internet) do Alpine virt com pausa e retomada. Só com BOOTFORGE_LIVE=1. */
     @Test
     fun liveAlpineDownloadWithPauseAndResume() {

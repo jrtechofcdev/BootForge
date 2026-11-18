@@ -11,6 +11,7 @@ import me.jahnen.libaums.core.driver.scsi.ScsiBlockDevice
 import me.jahnen.libaums.core.usb.UsbCommunication
 import me.jahnen.libaums.core.usb.UsbCommunicationFactory
 import java.io.IOException
+import dev.bootforge.integrity.Diag
 import java.nio.ByteBuffer
 
 /**
@@ -52,7 +53,14 @@ class UsbBlockDevice private constructor(
         var done = 0
         while (done < length) {
             val n = minOf(MAX_TRANSFER, length - done)
-            driver.read(lba + done / blockSize, ByteBuffer.wrap(buffer, offset + done, n))
+            val at = lba + done / blockSize
+            Diag.d("SCSI") { "READ(10) LBA $at, ${n / blockSize} setores" }
+            try {
+                driver.read(at, ByteBuffer.wrap(buffer, offset + done, n))
+            } catch (e: Exception) {
+                Diag.e("SCSI", "Falha de LEITURA no LBA $at (${n / blockSize} setores)", e)
+                throw if (e is IOException) e else IOException("Falha de leitura no setor $at: ${e.message}", e)
+            }
             done += n
         }
     }
@@ -63,7 +71,14 @@ class UsbBlockDevice private constructor(
         var done = 0
         while (done < length) {
             val n = minOf(MAX_TRANSFER, length - done)
-            driver.write(lba + done / blockSize, ByteBuffer.wrap(buffer, offset + done, n))
+            val at = lba + done / blockSize
+            Diag.d("SCSI") { "WRITE(10) LBA $at, ${n / blockSize} setores" }
+            try {
+                driver.write(at, ByteBuffer.wrap(buffer, offset + done, n))
+            } catch (e: Exception) {
+                Diag.e("SCSI", "Falha de GRAVAÇÃO no LBA $at (${n / blockSize} setores)", e)
+                throw if (e is IOException) e else IOException("Falha de gravação no setor $at: ${e.message}", e)
+            }
             done += n
         }
     }
@@ -83,6 +98,7 @@ class UsbBlockDevice private constructor(
     override fun close() {
         if (closed) return
         closed = true
+        Diag.i("USB", "Conexão com o pendrive fechada")
         runCatching { communication.close() }
     }
 
