@@ -1,0 +1,20 @@
+# Gradle / build
+.gradle/
+build/
+**/build/
+local.properties
+.kotlin/
+# IDE
+.idea/
+*.iml
+.vscode/
+# Android
+*.apk
+*.aab
+captures/
+# Imagens de teste (podem ter vários GB)
+*.img
+!third_party/**/*.img
+*.ppm
+# Logs
+*.log
