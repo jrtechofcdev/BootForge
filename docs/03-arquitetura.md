@@ -63,11 +63,23 @@ Independências pedidas pelo prompt:
 | `feature:ventoy-core` | `ImageCatalog`, `VentoyConfigStore`, `ThemeManager`/`GrubTheme`, `VentoyMaintenance`, `VentoyPersistence`, `VentoyReleaseClient` |
 | `app` | `AppGraph`, `DriveSession` (conexão única e exclusiva), `OperationRunner` + `OperationService` (primeiro plano), `VentoyViewModel`, telas `ui/screens/ventoy/*` |
 
+## Módulos adicionados na Etapa 3
+
+| Módulo | Conteúdo |
+|---|---|
+| `core:iso` | `UdfFileSystem` (ISOs do Windows), interface comum `ImageTree`, `ExtentRandomReader` (ler um arquivo de dentro da ISO sem extrair) |
+| `core:wim` | `WimSplitter`: divide install.wim em .swm copiando os recursos (sem recompactar) |
+| `core:fs-fat` | `Fat32Builder` (gera FAT32 completo com nomes longos, arquivos contíguos), leitura em stream |
+| `feature:iso-writer` | `IsoAnalyzer` (método recomendado + bloqueios/avisos) e `IsoWriter` (DD, Windows FAT32, extração FAT32; MBR/GPT; verificação) |
+| `app` | `UriRandomReader` (ISO do celular sem cópia), `IsoWriterViewModel`, `IsoWriterScreen` |
+
+Ordem de gravação nos métodos FAT32: apaga início/fim do disco → cria o FAT32 e copia → grava a
+tabela de partições por último → relê e confere o SHA-256 de cada arquivo.
+
 ## Módulos futuros previstos
 
 | Módulo | Etapa | Conteúdo |
 |---|---|---|
-| `feature:iso-writer` | 3 | análise de ISO, DD híbrido, Windows (FAT32 + WIM dividido / UEFI:NTFS) |
 | `core:iso` + `feature:iso-editor` | 5 | ISO9660/Joliet/UDF, edição não destrutiva, reconstrução |
 | `feature:catalog`, `feature:downloads` | 6 | metadados oficiais centralizados (JSON atualizável), downloads com retomada, checksums |
 

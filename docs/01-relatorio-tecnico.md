@@ -17,8 +17,8 @@ como fato: quando algo depende de hardware que ainda não testamos, isso está e
 | Dá para **instalar o Ventoy de verdade** pelo celular? | **Sim**: o processo do Ventoy2Disk foi reimplementado em Kotlin | ✅ validado em imagens de disco + boot real em QEMU (BIOS e UEFI) |
 | Dá para **reconhecer** um pendrive com Ventoy? | Sim, com as mesmas regras do instalador oficial | ✅ validado (inclusive em disco instalado pelo script oficial) |
 | Dá para **montar** o pendrive como no PC? | **Não sem root** — o app precisa ter seus próprios drivers de sistema de arquivos | ✅ contornado: FAT e exFAT implementados em Kotlin puro |
-| Gravar ISO **Linux** híbrida? | Sim (cópia setor a setor) | ✅ gravação RAW + verificação (PoC); 🟡 análise automática da ISO na Etapa 3 |
-| Gravar ISO do **Windows**? | Viável, mas exige montar FAT32/NTFS + dividir `install.wim` ou UEFI:NTFS | 🟡 Etapa 3 (via Ventoy já funciona hoje) |
+| Gravar ISO **Linux** híbrida? | Sim (cópia setor a setor) | ✅ DD com análise automática e verificação (Etapa 3) |
+| Gravar ISO do **Windows**? | Viável, mas exige montar FAT32/NTFS + dividir `install.wim` ou UEFI:NTFS | ✅ FAT32 + `install.wim` dividido em .swm, modo UEFI (Etapa 3); BIOS/Legacy via Ventoy |
 | Editar e reconstruir ISO no celular? | Viável com motor próprio (ISO9660/Joliet/El Torito); UDF é o ponto difícil | 🟡 Etapa 5 |
 
 **Conclusão:** o diferencial pedido — fazer tudo pelo Android, sem computador e **sem root** — é
@@ -111,17 +111,18 @@ opcional pode ser estudado depois (por exemplo, para NTFS com `ntfs-3g`), mas n�
 
 ---
 
-## 5. Gravação de ISOs (preparação para a Etapa 3)
+## 5. Gravação de ISOs (Etapa 3 — implementada)
 
-| Tipo de imagem | Método correto | Observações |
+| Tipo de imagem | Método usado pelo BootForge | Situação |
 |---|---|---|
-| Linux **híbrida** (Ubuntu, Mint, Debian, Fedora, Pop!\_OS, Zorin, Kali…) | Cópia setor a setor (modo "DD") | Já possui MBR/GPT + El Torito embutidos. ✅ PoC implementado com verificação SHA-256 |
-| ISO **não híbrida** | Extrair arquivos para FAT32 + instalar carregador | Exige leitor ISO9660 (Etapa 5) |
-| **Windows 10/11** | Partição FAT32 (UEFI) com `install.wim` dividido em `.swm` (> 4 GiB), **ou** NTFS + partição UEFI:NTFS | ISO usa UDF; gravação "DD" **não** funciona. Requer leitor UDF + escritor FAT32 + `wimlib` (LGPL/GPL) |
-| Qualquer ISO via **Ventoy** | Copiar o arquivo para a partição exFAT | ✅ boot do Ventoy validado; cópia de arquivos chega na Etapa 4 |
+| Linux **híbrida** (Ubuntu, Mint, Debian, Fedora, Pop!\_OS, Zorin, Kali…) | Cópia setor a setor ("DD") + apagamento do fim do disco + verificação SHA-256 por releitura | ✅ boot BIOS e UEFI no QEMU |
+| ISO **não híbrida** com `efi/boot/boot*.efi` | Extrair arquivos para FAT32 (MBR ou GPT) | ✅ boot UEFI no QEMU (MBR e GPT) |
+| **Windows 10/11** | FAT32 (UEFI) com `install.wim` > 4 GiB dividido em `.swm` — implementação própria (leitor UDF + gerador FAT32 + divisor WIM), sem `wimlib` no APK | ✅ validado com `wimlib verify/apply`; 🧪 boot do instalador real a testar no PC |
+| Windows com `install.esd` > 4 GiB | NTFS + UEFI:NTFS (não implementado) | ⛔ o app explica e indica o Ventoy |
+| Qualquer ISO via **Ventoy** | Copiar o arquivo para a partição exFAT | ✅ |
 
-O app **informa** o método e as limitações: o PoC atual avisa explicitamente que ISOs do Windows
-não funcionam em gravação RAW.
+O app **analisa** cada ISO, recomenda o método e mostra os motivos quando um método não serve
+(ex.: "ISOs do Windows não iniciam quando gravadas em modo DD").
 
 ---
 

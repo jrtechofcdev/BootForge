@@ -18,6 +18,13 @@ import dev.bootforge.app.ui.ImageFile
 import dev.bootforge.app.data.OperationState
 import dev.bootforge.app.ui.screens.DriveDetails
 import dev.bootforge.app.ui.screens.HomeContent
+import dev.bootforge.app.ui.screens.IsoWriterActions
+import dev.bootforge.app.ui.screens.IsoWriterContent
+import dev.bootforge.app.ui.IsoSource
+import dev.bootforge.app.ui.IsoWriterUi
+import dev.bootforge.app.ui.InspectState
+import dev.bootforge.blockdev.RandomReader
+import dev.bootforge.isowriter.IsoAnalyzer
 import dev.bootforge.app.ui.screens.InstallForm
 import dev.bootforge.app.ui.screens.OperationContent
 import dev.bootforge.app.ui.theme.BfColors
@@ -73,6 +80,28 @@ class ScreenshotTest {
     @Composable
     private fun Scroll(content: @Composable () -> Unit) =
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { content() }
+
+    /**
+     * Tela "Gravar ISO" com uma análise REAL: uma ISO com a estrutura do instalador do Windows
+     * (UDF, bootmgr, efi/boot, sources/boot.wim e install.wim) é gerada com o genisoimage e analisada pelo motor.
+     */
+    @Test
+    fun isoWriter() {
+        val work = File.createTempFile("shot-iso", "").apply { delete(); mkdirs() }
+        val tree = File(work, "t")
+        listOf("bootmgr", "bootmgr.efi", "efi/boot/bootx64.efi", "sources/boot.wim", "sources/install.wim", "setup.exe").forEach {
+            File(tree, it).apply { parentFile.mkdirs(); writeBytes(ByteArray(40_000) { i -> (i * 7).toByte() }) }
+        }
+        val iso = File(work, "Win11_24H2_BrazilianPortuguese_x64.iso")
+        ProcessBuilder("genisoimage", "-quiet", "-udf", "-J", "-V", "CCCOMA_X64FRE_PT-BR_DV9", "-o", iso.path, tree.path).start().waitFor()
+        val analysis = RandomReader.of(iso).use { IsoAnalyzer.analyze(iso.name, it) }
+        work.deleteRecursively()
+        val report = realReport(install = true)
+        val ui = IsoWriterUi(IsoSource.Ready(android.net.Uri.EMPTY, iso.name, analysis), analysis.recommended, analysis.recommendedScheme, true, usb.deviceName)
+        paparazzi.snapshot {
+            Screen { IsoWriterContent(ui, listOf(usb), report, InspectState.Ready(report), IsoWriterActions()) }
+        }
+    }
 
     @Test
     fun home() = paparazzi.snapshot { Screen { HomeContent(driveCount = 1, onNavigate = {}) } }

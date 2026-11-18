@@ -22,6 +22,8 @@ import dev.bootforge.app.ui.screens.DriveDetailScreen
 import dev.bootforge.app.ui.screens.DrivesScreen
 import dev.bootforge.app.ui.screens.HistoryScreen
 import dev.bootforge.app.ui.screens.HomeScreen
+import dev.bootforge.app.ui.screens.IsoWriterScreen
+import dev.bootforge.app.ui.IsoWriterViewModel
 import dev.bootforge.app.ui.screens.OperationOverlay
 import dev.bootforge.app.ui.screens.SettingsScreen
 import dev.bootforge.app.ui.screens.VentoyInstallScreen
@@ -36,6 +38,7 @@ object Routes {
     const val DRIVES = "drives"
     const val DRIVE = "drive/{id}"
     const val VENTOY = "ventoy"
+    const val ISO_WRITER = "iso-writer"
     const val VENTOY_INSTALL = "ventoy/install/{id}"
     const val HISTORY = "history"
     const val SETTINGS = "settings"
@@ -85,6 +88,9 @@ fun BootForgeApp(vm: AppViewModel = viewModel()) {
             composable(Routes.VENTOY_INSTALL) { entry ->
                 val id = Uri.decode(entry.arguments?.getString("id").orEmpty())
                 VentoyInstallScreen(vm, id, onBack = { nav.popBackStack() })
+            }
+            composable(Routes.ISO_WRITER) {
+                IsoWriterScreen(vm, viewModel<IsoWriterViewModel>(), onBack = { nav.popBackStack() })
             }
             composable(Routes.HISTORY) { HistoryScreen(vm, onBack = { nav.popBackStack() }) }
             composable(Routes.SETTINGS) { SettingsScreen(vm, onBack = { nav.popBackStack() }) }

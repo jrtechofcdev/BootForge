@@ -15,7 +15,7 @@ Anote os resultados na tabela do final e me envie (ou cole no `docs/ACOMPANHAMEN
 
 ## Instalação do app
 
-1. Copie o arquivo `BootForge-0.2.0.apk` para o celular.
+1. Copie o arquivo `BootForge-0.3.0.apk` para o celular.
 2. Toque nele e permita "instalar apps desconhecidos" para o gerenciador de arquivos.
 3. Abra o **BootForge**.
 
@@ -97,6 +97,20 @@ Use o pendrive com Ventoy do passo 4. Abra **Ventoy** na tela inicial — aparec
 | 21 | Persistência | *Criar arquivo de persistência* (Ubuntu, 4096 MiB, vincular à ISO Ubuntu) | No PC, a ISO Ubuntu pergunta/usa persistência e mantém alterações após reiniciar |
 | 22 | Atualizações | Aba **Atualizações** → *Consultar versões* → *Baixar* | Pacote "verificado"; *Atualizar o pendrive* mantém as ISOs |
 
+## Etapa 3 — Gravar ISO (passos 23 a 27)
+
+> Estes passos **apagam o pendrive**. Depois, reinstale o Ventoy se quiser voltar a usá-lo.
+
+| Passo | Onde | O que fazer | Esperado |
+|---|---|---|---|
+| 23 | Tela inicial → **Gravar ISO** | *Escolher imagem* → uma ISO **Linux** (ex.: Ubuntu, Mint, Debian live) | Mostra sistema, "ISO híbrida: sim", método **Imagem direta (DD)** recomendado |
+| 24 | Mesma tela | Escolha o pendrive → *Gravar* → digite APAGAR | Progresso real com velocidade; no fim, "Verificação concluída"; no PC, a ISO inicia (BIOS e/ou UEFI) |
+| 25 | Mesma tela | *Escolher outra imagem* → ISO **oficial do Windows 10/11** (site da Microsoft) | Sistema "Windows", DD **indisponível** (com o motivo), **Instalador do Windows (FAT32, UEFI)** recomendado; se o install.wim passar de 4 GB, aparece o aviso de divisão |
+| 26 | Mesma tela | Gravar com **MBR** (padrão) | No PC em modo **UEFI**, o instalador do Windows abre e chega na escolha de edição/disco (não precisa instalar) |
+| 27 | Mesmo pendrive | Ligue um PC em modo **Legacy/BIOS** | Aparece a mensagem "esta midia inicia somente em modo UEFI" (não trava em tela preta) |
+
+*Tempo de referência:* anote quanto levou a gravação + verificação da ISO do Windows (ela tem ~5–7 GB).
+
 ## Tabela de resultados
 
 | Item | Resultado (OK / falhou + mensagem) |
@@ -117,3 +131,6 @@ Use o pendrive com Ventoy do passo 4. Abra **Ventoy** na tela inicial — aparec
 | 18–20. Verificar, Secure Boot, backup | |
 | 21. Persistência funcionando na distro | |
 | 22. Atualização online | |
+| 23–24. ISO Linux em DD + boot | |
+| 25–26. Windows FAT32 (tempo: ___ min) + instalador abre | |
+| 27. Aviso em modo BIOS | |

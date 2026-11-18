@@ -51,7 +51,7 @@ import dev.bootforge.app.ui.theme.BfColors
 private data class Module(val title: String, val description: String, val icon: ImageVector, val route: String?, val stage: String?)
 
 private val modules = listOf(
-    Module("Gravar ISO", "Gravação inteligente de imagens Windows e Linux", Icons.Filled.Album, null, "Etapa 3"),
+    Module("Gravar ISO", "Gravação inteligente de imagens Windows e Linux", Icons.Filled.Album, Routes.ISO_WRITER, null),
     Module("Ventoy", "Instalar, ISOs, arquivos, temas e ferramentas", Icons.Filled.RocketLaunch, Routes.VENTOY, null),
     Module("Editor de ISO", "Explorar, extrair e reconstruir imagens", Icons.Filled.EditNote, null, "Etapa 5"),
     Module("Catálogo", "Sistemas operacionais de fontes oficiais", Icons.Filled.CloudDownload, null, "Etapa 6"),

@@ -7,7 +7,7 @@ via USB OTG, sem root e sem computador**.
 
 ![Telas do BootForge](docs/img/app-telas.png)
 
-> **Estado atual: 0.2.0 — Etapas 1, 2 e 4 (Ventoy completo) de 7.**
+> **Estado atual: 0.3.0 — Etapas 1, 2, 3 (gravação de ISOs) e 4 (Ventoy completo) de 7.**
 > Tudo validado em discos virtuais com boot real no QEMU (BIOS e UEFI) e comparado com as
 > ferramentas oficiais do Ventoy. **Ainda não testado em celular real** — veja o
 > [roteiro de testes](docs/ROTEIRO-TESTES-REAIS.md). Status completo em
@@ -17,6 +17,10 @@ via USB OTG, sem root e sem computador**.
 
 - 🔌 Detecção de pendrives por USB OTG, pedido de permissão e acesso **setor a setor** (sem root).
 - 🔎 Leitura de MBR/GPT, partições, sistemas de arquivos e setor 0.
+- 💽 **Gravar ISO** com análise automática: ISO híbrida (Linux) em **DD**; **instalador do Windows**
+  em FAT32 com o `install.wim` > 4 GB dividido em `.swm` (método oficial da Microsoft); outras ISOs
+  UEFI extraídas para FAT32; MBR ou GPT; verificação SHA-256 por releitura. O app explica por que
+  cada método está disponível ou não.
 - 🚀 **Ventoy 1.1.18**: detecção automática (mesmas regras do oficial), instalação real (MBR ou GPT,
   alinhamento 4K, espaço reservado, Secure Boot) e atualização **sem apagar as ISOs**.
 - 🗂️ **Gerenciador de arquivos** da partição do Ventoy: copiar do/para o celular, mover, renomear,
@@ -41,6 +45,8 @@ Módulos ainda não implementados aparecem **bloqueados** na tela inicial com a 
 | Apelido e contagem gravados pelo app no `ventoy.json` | A ISO copiada pelo app dando boot |
 | ![Tema](docs/img/qemu-e4-theme.png) | ![UEFI](docs/img/qemu-gpt-uefi.png) |
 | Tema aplicado pelo app | GPT + UEFI |
+| ![Extração FAT32 em UEFI](docs/img/e3-ext-mbr-uefi.png) | ![DD em BIOS](docs/img/e3-dd-bios.png) |
+| Etapa 3: ISO extraída para FAT32 dando boot em UEFI | Etapa 3: ISO híbrida gravada em DD (BIOS) |
 
 ## Estrutura de pastas
 
@@ -58,11 +64,13 @@ BootForge/
 ├── core/                   Núcleo em Kotlin puro (roda no celular e no PC)
 │   ├── blockdev/           "dispositivo de setores", cópia com progresso e hash
 │   ├── partition/          MBR, GPT, identificação de sistemas de arquivos
-│   ├── fs-fat/             leitor FAT
+│   ├── fs-fat/             FAT: leitor, escrita mínima e gerador FAT32
+│   ├── wim/                divisão do install.wim em .swm
 │   ├── fs-exfat/           exFAT: formatar, ler, gravar, verificar
 │   ├── fs-ext/             ext2/ext3 (persistência)
 │   ├── iso/                ISO9660/Joliet/Rock Ridge/El Torito/UDF + identificação
 │   └── integrity/          SHA-256/512
+├── feature/iso-writer/     Etapa 3: análise da ISO e gravação (DD, Windows FAT32, extração)
 ├── feature/ventoy-core/    instalar, detectar, atualizar, catálogo, temas, ferramentas, download
 ├── feature/ventoy-config/  ventoy.json: esquema oficial, validação, edição
 ├── tools/cli/              ferramenta de linha de comando (testes com arquivos .img)
@@ -104,6 +112,8 @@ $CLI put     teste.img minha.iso /Linux/minha.iso     # copia arquivos para o pe
 $CLI catalog teste.img                                # o que aparece no menu do Ventoy
 $CLI check   teste.img                                # verificar instalação
 $CLI secureboot teste.img off                         # e mais: json, control, theme, persist, isoinfo
+$CLI iso-analyze minha.iso                            # Etapa 3: qual método usar e por quê
+$CLI iso-write   minha.iso teste.img [--gpt]           # grava a ISO no pendrive virtual
 ```
 
 Para testar o boot no Linux: `tools/scripts/qemu-screenshot.sh teste.img uefi tela.ppm`.
