@@ -79,7 +79,7 @@ private fun run(args: Array<String>) {
             val r = VentoyUpdater(VentoyPackage.fromDirectory(ventoyDir)).update(dev, dev.sizeBytes, ConsoleObserver)
             println("\nAtualizado: ${r.fromVersion} → ${r.toVersion}")
         }
-        else -> usage()
+        else -> if (!fsCommand(cmd, file, args)) usage()
     }
 }
 
@@ -107,6 +107,15 @@ private fun usage(): Nothing {
           bootforge-cli inspect <imagem.img>
           bootforge-cli install <imagem.img> [--gpt] [--reserve MiB] [--no-align] [--ventoy <pasta>]
           bootforge-cli update  <imagem.img> [--ventoy <pasta>]
+
+        Arquivos na partição de dados (Ventoy) ou em imagem exFAT:
+          bootforge-cli ls    <imagem.img> [/pasta]
+          bootforge-cli put   <imagem.img> <arquivo-local> </destino/nome> [--overwrite]
+          bootforge-cli get   <imagem.img> </origem> <arquivo-local>
+          bootforge-cli mkdir <imagem.img> </pasta>
+          bootforge-cli rm    <imagem.img> </caminho> [-r]
+          bootforge-cli mv    <imagem.img> </caminho> </pasta-destino>
+          bootforge-cli ren   <imagem.img> </caminho> <novo-nome>
         """.trimIndent(),
     )
     exitProcess(2)
