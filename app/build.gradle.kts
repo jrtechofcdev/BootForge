@@ -31,6 +31,8 @@ abstract class PrepareVentoyAssets : DefaultTask() {
             dst.parentFile.mkdirs()
             src.copyTo(dst, overwrite = true)
         }
+        // Tema original e exemplos de plugin (para "Instalar tema original" e referência)
+        ventoyDir.get().dir("plugin").asFile.copyRecursively(File(out, "ventoy/plugin"), overwrite = true)
     }
 }
 
@@ -47,8 +49,8 @@ android {
         applicationId = "dev.bootforge.app"
         minSdk = 26          // Android 8.0
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0-poc"
+        versionCode = 2
+        versionName = "0.2.0"
     }
 
     buildTypes {
@@ -92,6 +94,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.documentfile)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

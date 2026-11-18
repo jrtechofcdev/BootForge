@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.bootforge.app.ui.DriveReport
 import dev.bootforge.app.ui.ImageFile
-import dev.bootforge.app.ui.OperationState
+import dev.bootforge.app.data.OperationState
 import dev.bootforge.app.ui.screens.DriveDetails
 import dev.bootforge.app.ui.screens.HomeContent
 import dev.bootforge.app.ui.screens.InstallForm

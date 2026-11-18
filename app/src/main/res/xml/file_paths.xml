@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Arquivos temporários para compartilhar (copiados do pendrive). -->
+    <cache-path name="compartilhar" path="share/" />
+</paths>

@@ -37,7 +37,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import dev.bootforge.app.data.Format
 import dev.bootforge.app.ui.AppViewModel
-import dev.bootforge.app.ui.OperationState
+import dev.bootforge.app.data.OperationState
 import dev.bootforge.app.ui.components.Notice
 import dev.bootforge.app.ui.theme.BfColors
 import dev.bootforge.app.ui.theme.MonoStyle
