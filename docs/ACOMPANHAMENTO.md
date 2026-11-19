@@ -1,6 +1,6 @@
 # Documento de acompanhamento — BootForge
 
-Última atualização: 18/11/2026 · Versão do app: **0.6.1**
+Última atualização: 18/11/2026 · Versão do app: **0.6.2**
 
 Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular real · 🟡 pendente · ⛔ limitação técnica
 
@@ -117,7 +117,7 @@ Ver [`03-arquitetura.md`](03-arquitetura.md#dependências) e [`THIRD_PARTY_LICEN
 | Teste | Resultado |
 |---|---|
 | `./gradlew test` + capturas — **127 execuções** | ✅ 0 falhas |
-| **Celular real — Samsung Galaxy A16 (Android 16), 19/11/2026** | ❌ na 0.6.0 (comandos de 1 MB recusados); corrigido na 0.6.1 — aguardando reteste |
+| **Celular real — Samsung Galaxy A16 (Android 16), 19/11/2026** | ❌ na 0.6.0 (comandos de 1 MB recusados) → ✅ **0.6.1: ISO gravada em DD e verificada (353 MB)**; ❌ Ventoy na 0.6.1 (upcase.bin, só no APK) → corrigido na 0.6.2, aguardando reteste |
 | Etapa 6 ao vivo: 14 fontes consultadas; Ubuntu, Debian e Mint com assinatura válida; download real do Alpine pausado, retomado e verificado | ✅ (`BOOTFORGE_LIVE=1`) |
 | Etapa 5 no QEMU: Alpine editado (Preservar) como pendrive e CD em BIOS e UEFI; boot completo até o login; reconstrução completa como CD até o login; imagem de boot realocada iniciando pelo MBR GRUB2 e pelo El Torito | ✅ (`docs/img/e5-*.png`) |
 | Etapa 5: ISO UDF reconstruída montada pelo driver UDF do kernel Linux (SHA-256 de 246 arquivos; diferenças só nas edições) | ✅ (`docs/img/e5-udf-linux-kernel.log`) |
@@ -137,6 +137,7 @@ Ver [`03-arquitetura.md`](03-arquitetura.md#dependências) e [`THIRD_PARTY_LICEN
 
 | Problema | Solução |
 |---|---|
+| **2º teste real:** Ventoy falhou com "Recurso upcase.bin ausente" só no APK de release | Caminho absoluto + `-dontobfuscate` (logs legíveis) + teste que proíbe caminhos relativos |
 | **1º teste real (Galaxy A16, Android 16):** pendrive 3207:0300 recusava comandos de 1 MB e travava | 64 KB por comando + redução automática + recuperação sem desconectar (0.6.1). Diagnóstico feito pelo relatório de log |
 | No exFAT, erro ao finalizar escondia o erro original (pendrive arrancado) | Erro original mantido; o da finalização vai como "suprimido" |
 | Download começava mesmo sem espaço e falhava no meio | Verificação de espaço livre antes de começar, com mensagem "faltam X MB" |
@@ -159,6 +160,6 @@ Ver [`03-arquitetura.md`](03-arquitetura.md#dependências) e [`THIRD_PARTY_LICEN
 
 ## 7. Próximas etapas
 
-1. **Você:** testar o APK 0.6.1 (seção "Reteste da 0.6.1" do [roteiro](ROTEIRO-TESTES-REAIS.md)) e enviar o **relatório de log**.
+1. **Você:** testar o APK 0.6.2 (seção "Reteste" do [roteiro](ROTEIRO-TESTES-REAIS.md)): capacidade real e instalação do Ventoy; enviar o **relatório de log**.
 2. Corrigir o que aparecer no hardware real e preencher a matriz de compatibilidade.
 3. Com os testes reais aprovados: versão **1.0.0**.

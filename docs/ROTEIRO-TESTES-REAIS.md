@@ -12,14 +12,14 @@ independente. Anote os resultados na tabela do final e me envie.
 
 *Informação importante:* o relatório não inclui seus arquivos nem contas; o número de série do pendrive aparece mascarado. Junto com o arquivo, conte em uma frase **o que você estava fazendo**.
 
-## 🔁 Reteste da 0.6.1 (comece por aqui)
+## 🔁 Reteste (0.6.2) — comece por aqui
 
-O primeiro teste (Galaxy A16 + pendrive 3207:0300) falhou porque o pendrive recusava comandos de
-1 MB. A 0.6.1 usa 64 KB e se adapta sozinha. Com o **mesmo pendrive**:
+Na 0.6.1 a gravação de ISO já funcionou no Galaxy A16. A 0.6.2 corrige a instalação do Ventoy
+("upcase.bin ausente"). Com o **mesmo pendrive**:
 
 | # | O que fazer | Esperado |
 |---|---|---|
-| R1 | Instale o `BootForge-0.6.1.apk` por cima. Em **Logs**, toque em *Limpar* e deixe **Log detalhado** ligado | — |
+| R1 | Instale o `BootForge-0.6.2.apk` por cima. Em **Logs**, toque em *Limpar* e deixe **Log detalhado** ligado | — |
 | R2 | **Pendrives** → seu pendrive → *Teste de leitura* | Termina e mostra a velocidade (antes falhava) |
 | R3 | No mesmo lugar: *Testar capacidade real* | "Capacidade real confirmada" **ou** "PENDRIVE COM CAPACIDADE FALSA" com a capacidade que funciona de verdade |
 | R4 | Se R3 confirmou a capacidade: **Ventoy** → *Instalar* | Instala e verifica (antes falhava no início) |
@@ -40,7 +40,7 @@ arquivos: repita R2–R5 com outro pendrive, de marca conhecida.
 
 ## Instalação do app
 
-1. Copie o arquivo `BootForge-0.6.1.apk` para o celular (pode instalar por cima da versão anterior).
+1. Copie o arquivo `BootForge-0.6.2.apk` para o celular (pode instalar por cima da versão anterior).
 2. Toque nele e permita "instalar apps desconhecidos" para o gerenciador de arquivos.
 3. Abra o **BootForge**.
 

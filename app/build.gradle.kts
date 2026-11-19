@@ -49,8 +49,8 @@ android {
         applicationId = "dev.bootforge.app"
         minSdk = 26          // Android 8.0
         targetSdk = 35
-        versionCode = 7
-        versionName = "0.6.1"
+        versionCode = 8
+        versionName = "0.6.2"
     }
 
     buildTypes {

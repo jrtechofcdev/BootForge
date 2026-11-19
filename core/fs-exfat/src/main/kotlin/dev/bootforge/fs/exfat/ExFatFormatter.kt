@@ -49,7 +49,8 @@ object ExFatFormatter {
 
     /** Tabela up-case padrão (5836 bytes, compactada), a mesma recomendada pela especificação. */
     val upcaseTable: ByteArray by lazy {
-        ExFatFormatter::class.java.getResourceAsStream("upcase.bin")?.use { it.readBytes() }
+        // caminho ABSOLUTO: no APK o R8 renomeia os pacotes e um caminho relativo à classe se perde
+        ExFatFormatter::class.java.getResourceAsStream("/dev/bootforge/fs/exfat/upcase.bin")?.use { it.readBytes() }
             ?: throw IllegalStateException("Recurso upcase.bin ausente")
     }
 

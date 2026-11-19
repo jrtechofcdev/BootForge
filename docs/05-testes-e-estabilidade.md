@@ -83,7 +83,8 @@ relatório gerado em **Logs**.
 
 | Celular / Android | Pendrive (marca, GB, USB 2/3) | Ventoy (instalar/atualizar) | Gravar Linux (DD) | Gravar Windows (FAT32) | Editor | Download | Observações |
 |---|---|---|---|---|---|---|---|
-| Samsung Galaxy A16 (SM-A165M) · Android 16 — app 0.6.0 (19/11/2026) | Genérico VID:PID 3207:0300, "816820090226", anuncia 64 GB | ❌ falhou na 1ª gravação | ❌ falhou na 1ª gravação | — | — | — | Detecção, permissão e leitura de 1 setor OK. **Todo comando de 1 MB recusado** (bulkTransfer −1) e o pendrive travava até ser reconectado. Corrigido na 0.6.1 (ver seção 7). Retestar. |
+| Samsung Galaxy A16 (SM-A165M) · Android 16 — app 0.6.0 (19/11/2026) | Genérico VID:PID 3207:0300, "816820090226", anuncia 64 GB | ❌ falhou na 1ª gravação | ❌ falhou na 1ª gravação | — | — | — | Detecção, permissão e leitura de 1 setor OK. **Todo comando de 1 MB recusado** (bulkTransfer −1) e o pendrive travava até ser reconectado. Corrigido na 0.6.1 (ver seção 7). |
+| Samsung Galaxy A16 · Android 16 — app **0.6.1** (19/11/2026) | mesmo pendrive 3207:0300 | ❌ "Recurso upcase.bin ausente" (só no APK; corrigido na 0.6.2) | ✅ **Alpine 3.24.4 (353 MB) gravado e verificado** — gravação ~25 s (≈14 MB/s), verificação ~51 s | — | — | — | **A correção USB funcionou**: comandos de 64 KB, sem nenhuma falha. Teste de capacidade ainda não executado |
 | | | | | | | | |
 
 ## 7. Primeiro teste real (19/11/2026) — diagnóstico pelo log
@@ -116,6 +117,18 @@ reiniciar) — com 64 KB funciona sem recuperação; um pendrive ainda mais limi
 recuperado sozinho e os dados ficam corretos. O teste de capacidade foi validado com pendrives
 falsos simulados ("dá a volta" → capacidade exata; "joga fora" → detectado) e com um verdadeiro
 (nenhum byte alterado).
+
+## 8. Segundo teste real (19/11/2026, app 0.6.1)
+
+- **Gravação DD funcionou de ponta a ponta**: 353 MB gravados e relidos com SHA-256 conferido,
+  todos os comandos com 64 KB, nenhuma recuperação necessária.
+- **Instalação do Ventoy falhou** ao formatar o exFAT: "Recurso upcase.bin ausente". Causa: o
+  otimizador R8 do APK de release renomeia os pacotes, e a tabela up-case do exFAT era carregada por
+  caminho *relativo* à classe. Nos testes no PC (sem R8) o erro não aparecia.
+- **Correção (0.6.2):** caminho absoluto; `-dontobfuscate` no R8 (classes mantêm os nomes reais —
+  isso também deixa os relatórios de log legíveis); teste novo que varre o código e falha se
+  algum recurso for carregado por caminho relativo; conferência do APK final (recurso e classes
+  presentes).
 
 ## 6. Limitações conhecidas
 
