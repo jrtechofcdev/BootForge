@@ -293,7 +293,18 @@ class ScreenshotTest {
         val fake = object : dev.bootforge.blockdev.BlockDevice by mem {
             override fun write(lba: Long, buffer: ByteArray, offset: Int, length: Int) { if (lba < limit) mem.write(lba, buffer, offset, length) }
         }
-        val r = SurfaceTest.run(fake)
+        val measured = SurfaceTest.run(fake)
+        // Capacidade real e trechos ruins vêm do motor. As velocidades de um disco em MEMÓRIA variam a
+        // cada execução (e não significam nada), então, para a captura ser reproduzível, usamos um perfil
+        // fixo típico de pendrive USB 2.0 (gravação 18 MB/s, leitura 32 MB/s), caindo após o limite real.
+        val realRegions = (measured.realBytes / (96L shl 20).toDouble() * measured.regions.size).toInt()
+        val r = measured.copy(
+            regions = measured.regions.map { g ->
+                val beyond = g.index >= realRegions
+                g.copy(writeBytesPerSec = if (beyond) 4.0e6 else 18.0e6 + (g.index % 7) * 4e5, readBytesPerSec = 32.0e6 - (g.index % 5) * 6e5)
+            },
+            writeBytesPerSec = 11.0e6, readBytesPerSec = 31.0e6,
+        )
         paparazzi.snapshot { Screen { Scroll { SurfaceResult(r) } } }
     }
 }
