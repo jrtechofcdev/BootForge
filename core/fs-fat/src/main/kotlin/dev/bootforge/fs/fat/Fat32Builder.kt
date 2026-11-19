@@ -43,6 +43,8 @@ object Fat32Builder {
         /** 0 = automático (tabela padrão da Microsoft). */
         val clusterSize: Int = 0,
         val volumeId: Long = Random.nextLong() and 0xFFFFFFFFL,
+        /** Mensagem mostrada se um PC tentar iniciar por este volume em modo BIOS (só ASCII). */
+        val bootMessage: String = "Midia UEFI: inicie o PC em modo UEFI.",
     )
 
     data class Layout(
@@ -260,7 +262,7 @@ object Fat32Builder {
         labelBytes(opt.label).copyInto(b, 71)
         "FAT32   ".toByteArray(Charsets.US_ASCII).copyInto(b, 82)
         // Código de boot BIOS: apenas mostra uma mensagem (mídia preparada para UEFI).
-        val msg = "Midia UEFI: inicie o PC em modo UEFI.\r\n".toByteArray(Charsets.US_ASCII)
+        val msg = (opt.bootMessage.filter { it.code in 0x20..0x7E }.take(300) + "\r\n").toByteArray(Charsets.US_ASCII)
         val code = byteArrayOf(0xFA.toByte(), 0x31, 0xC0.toByte(), 0x8E.toByte(), 0xD8.toByte(), 0xBE.toByte(), 0, 0, // cli; xor ax,ax; mov ds,ax; mov si,msg
             0xFC.toByte(), 0xAC.toByte(), 0x84.toByte(), 0xC0.toByte(), 0x74, 0x06, 0xB4.toByte(), 0x0E, 0xCD.toByte(), 0x10, 0xEB.toByte(), 0xF5.toByte(), 0xF4.toByte(), 0xEB.toByte(), 0xFD.toByte())
         val msgAddr = 0x7C00 + 90 + code.size

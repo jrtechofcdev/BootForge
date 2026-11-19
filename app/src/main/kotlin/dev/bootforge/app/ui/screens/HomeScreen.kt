@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.EditNote
@@ -57,6 +58,7 @@ private val modules = listOf(
     Module("Editor de ISO", "Explorar, extrair, editar e reconstruir imagens", Icons.Filled.EditNote, Routes.ISO_EDITOR, null),
     Module("Catálogo", "Sistemas operacionais de fontes oficiais", Icons.Filled.CloudDownload, Routes.CATALOG, null),
     Module("Pendrives", "Detectar, inspecionar e testar dispositivos", Icons.Filled.Usb, Routes.DRIVES, null),
+    Module("Ferramentas", "Formatar, testar, apagar, backup e checksum", Icons.Filled.Build, Routes.TOOLS, null),
     Module("Downloads", "Downloads com retomada e checksum", Icons.Filled.Download, Routes.DOWNLOADS, null),
     Module("Histórico", "Operações realizadas neste aparelho", Icons.Filled.History, Routes.HISTORY, null),
     Module("Logs", "Diagnóstico e envio de relatório de erros", Icons.Filled.BugReport, Routes.LOGS, null),

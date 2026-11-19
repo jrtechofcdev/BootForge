@@ -51,6 +51,7 @@ object Routes {
     const val CATALOG = "catalog"
     const val LOGS = "logs"
     const val DOWNLOADS = "downloads"
+    const val TOOLS = "tools"
     fun isoWriter(uri: Uri) = "iso-writer?uri=${Uri.encode(uri.toString())}"
     fun isoEditor(uri: Uri) = "iso-editor?uri=${Uri.encode(uri.toString())}"
     fun ventoyImport(uri: Uri, sha: String?) = "ventoy?import=${Uri.encode(uri.toString())}&sha=${sha.orEmpty()}"
@@ -114,6 +115,9 @@ fun BootForgeApp(vm: AppViewModel = viewModel()) {
             }
             composable("${Routes.ISO_EDITOR}?uri={uri}", arguments = listOf(optionalArg("uri"))) { entry ->
                 IsoEditorScreen(viewModel<IsoEditorViewModel>(), onBack = { nav.popBackStack() }, initialUri = entry.arguments?.getString("uri")?.let(Uri::parse))
+            }
+            composable(Routes.TOOLS) {
+                dev.bootforge.app.ui.screens.ToolsScreen(vm, viewModel<dev.bootforge.app.ui.ToolsViewModel>(), onBack = { nav.popBackStack() })
             }
             composable(Routes.LOGS) { dev.bootforge.app.ui.screens.LogsScreen(onBack = { nav.popBackStack() }) }
             composable(Routes.CATALOG) {

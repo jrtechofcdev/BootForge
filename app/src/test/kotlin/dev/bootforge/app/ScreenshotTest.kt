@@ -71,6 +71,13 @@ import dev.bootforge.ventoy.VentoyDetector
 import dev.bootforge.ventoy.VentoyInstallOptions
 import dev.bootforge.ventoy.VentoyInstaller
 import dev.bootforge.ventoy.VentoyPackage
+import dev.bootforge.app.ui.MediaTool
+import dev.bootforge.app.ui.ToolsUi
+import dev.bootforge.app.ui.screens.SurfaceResult
+import dev.bootforge.app.ui.screens.ToolsActions
+import dev.bootforge.app.ui.screens.ToolsContent
+import dev.bootforge.blockdev.MemoryBlockDevice
+import dev.bootforge.mediatools.SurfaceTest
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -264,5 +271,29 @@ class ScreenshotTest {
                 onCancel = {}, onClose = {},
             )
         }
+    }
+
+    /** Ferramentas → Formatar, com o pendrive lido de um disco virtual onde o Ventoy foi instalado de verdade. */
+    @Test
+    fun tools() {
+        val report = realReport(install = true)
+        paparazzi.snapshot {
+            Screen { ToolsContent(ToolsUi(MediaTool.FORMAT, usb.deviceName), listOf(usb), report, InspectState.Ready(report), ToolsActions()) }
+        }
+    }
+
+    /**
+     * Resultado do teste de superfície produzido pelo motor REAL sobre um pendrive falso simulado
+     * (anuncia 96 MB, guarda 40 MB e descarta o resto).
+     */
+    @Test
+    fun surfaceResult() {
+        val mem = MemoryBlockDevice(96 shl 20)
+        val limit = (40L shl 20) / 512
+        val fake = object : dev.bootforge.blockdev.BlockDevice by mem {
+            override fun write(lba: Long, buffer: ByteArray, offset: Int, length: Int) { if (lba < limit) mem.write(lba, buffer, offset, length) }
+        }
+        val r = SurfaceTest.run(fake)
+        paparazzi.snapshot { Screen { Scroll { SurfaceResult(r) } } }
     }
 }

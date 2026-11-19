@@ -49,8 +49,8 @@ android {
         applicationId = "dev.bootforge.app"
         minSdk = 26          // Android 8.0
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.6.2"
+        versionCode = 9
+        versionName = "0.7.0"
     }
 
     buildTypes {
@@ -92,6 +92,7 @@ dependencies {
     implementation(project(":feature:iso-writer"))
     implementation(project(":feature:iso-editor"))
     implementation(project(":feature:catalog"))
+    implementation(project(":feature:media-tools"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

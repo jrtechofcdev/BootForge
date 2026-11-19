@@ -1,10 +1,10 @@
 # Documento de acompanhamento — BootForge
 
-Última atualização: 18/11/2026 · Versão do app: **0.6.2**
+Última atualização: 19/11/2026 · Versão do app: **0.7.0**
 
 Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular real · 🟡 pendente · ⛔ limitação técnica
 
-## 0. Etapas do projeto (7 no total)
+## 0. Etapas do projeto (10 no total)
 
 | # | Etapa | Situação |
 |---|---|---|
@@ -14,7 +14,10 @@ Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular
 | 4 | Ventoy completo | ✅ Concluída no núcleo e na interface (🧪 falta teste no celular) |
 | 5 | Editor de ISO | ✅ Concluída no núcleo e na interface (🧪 falta teste no celular) |
 | 6 | Catálogo e downloads | ✅ Concluída no núcleo e na interface (🧪 falta teste no celular) |
-| 7 | Testes e estabilidade | ✅ Parte automatizada concluída (injeção de falhas, captura de logs); 🧪 **testes em hardware real pendentes** |
+| 7 | Testes e estabilidade | ✅ Concluída; validada no Galaxy A16 (correções 0.6.1 e 0.6.2) |
+| 8 | Ferramentas de pendrive e cartão (formatar, superfície, apagar, backup/restauração, checksum) | ✅ Concluída no núcleo e na interface (🧪 falta teste no celular) — **APK 0.7.0** |
+| 9 | Recuperação de fotos/vídeos, imagens compactadas, catálogo (Kali, Linux Lite, Raspberry Pi OS) | 🟡 Próxima — APK 0.8.0 |
+| 10 | Windows 11 personalizado e Linux portátil (persistência + partição DADOS) | 🟡 APK 0.9.0 |
 
 ## 1. Funcionalidades implementadas
 
@@ -58,6 +61,17 @@ Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular
 | Persistência (.dat ext2/ext3 + regra no ventoy.json) | ✅ | `e2fsck`, `debugfs` |
 | Atualização online (GitHub oficial, retomada, sha256.txt) | ✅ / 🧪 | Servidor local imitando a API (retomada, checksum adulterado rejeitado). **API real do GitHub: só no celular** |
 
+### Etapa 8 — Ferramentas de pendrive e cartão (`feature/media-tools`)
+| Funcionalidade | Status | Validação |
+|---|---|---|
+| Formatar FAT32/exFAT, MBR/GPT, rótulo (apaga tabelas antigas no início e no fim; tabela gravada por último; relê e confere) | ✅ | `fsck.fat`, `fsck.exfat`, `sfdisk`, `sgdisk -v` nas 4 combinações; pendrive arrancado no meio → falha clara |
+| Teste completo de superfície (marca única por bloco de 1 MB, relê tudo) | ✅ | Setores ruins e erros de leitura simulados (trechos exatos), pendrive falso que "dá a volta" e que descarta dados (capacidade real exata), pendrive que para de responder |
+| Mapa de velocidade de gravação/leitura por região (100 regiões) | ✅ | Captura automática |
+| Apagar com segurança: rápido (64 MB iniciais + 16 MB finais) e completo (zeros em tudo) com conferência por releitura | ✅ | Conteúdo conferido byte a byte; pendrive que ignora gravações é detectado |
+| Backup do pendrive inteiro → `.img.gz` (SAF) com SHA-256 | ✅ | `gzip -d` + `sha256sum` idênticos; arquivo incompleto removido em falha/cancelamento |
+| Restaurar `.img`/`.img.gz` (mede antes, recusa se não couber, verifica por releitura) | ✅ | Ida e volta com SHA-256 igual; pendrive menor recusado sem gravar nada |
+| Checksum MD5, SHA-1, SHA-256, SHA-512 (uma leitura só) de arquivo do celular ou ISO do pendrive Ventoy; comparar com valor colado | ✅ | Igual a `md5sum`, `sha1sum`, `sha256sum`, `sha512sum` |
+
 ### Aplicativo Android
 | Funcionalidade | Status |
 |---|---|
@@ -75,6 +89,7 @@ Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular
 | **Catálogo**: consultar versões, selo de verificação, baixar, página oficial; Windows pelo navegador + verificação | 🧪 (captura ✅) |
 | **Downloads**: fila, progresso/velocidade/tempo restante, pausar/continuar/cancelar, notificação em segundo plano; biblioteca com Gravar, Copiar para o Ventoy, Abrir no editor, Salvar no celular, Excluir | 🧪 (captura ✅) |
 | **Logs e diagnóstico**: log contínuo em arquivo com rotação, travamentos gravados e oferecidos na próxima abertura, botão *Enviar log do erro* nas falhas, tela Logs (compartilhar, salvar .txt, copiar, limpar, log detalhado SCSI) | 🧪 (captura ✅) |
+| **Ferramentas** (Etapa 8): formatar, teste de superfície com mapa de velocidade, apagar, backup/restauração de imagem, checksum — confirmação APAGAR nas que apagam | 🧪 (capturas ✅) |
 | Diagnóstico (Etapas 1–2): teste de leitura, gravação RAW + verificação, setor 0 | 🧪 |
 
 ## 2. Pendências
@@ -160,6 +175,6 @@ Ver [`03-arquitetura.md`](03-arquitetura.md#dependências) e [`THIRD_PARTY_LICEN
 
 ## 7. Próximas etapas
 
-1. **Você:** testar o APK 0.6.2 (seção "Reteste" do [roteiro](ROTEIRO-TESTES-REAIS.md)): capacidade real e instalação do Ventoy; enviar o **relatório de log**.
-2. Corrigir o que aparecer no hardware real e preencher a matriz de compatibilidade.
-3. Com os testes reais aprovados: versão **1.0.0**.
+1. **Você:** testar o APK 0.7.0 — seção "Etapa 8" do [roteiro](ROTEIRO-TESTES-REAIS.md) (passos 46 a 53) — e enviar o log se algo falhar.
+2. **Etapa 9 (0.8.0):** recuperar fotos e vídeos apagados; gravar `.img.xz/.gz/.zip` direto; Kali Linux, Linux Lite e Raspberry Pi OS no catálogo.
+3. **Etapa 10 (0.9.0):** Windows 11 personalizado (sem TPM/conta Microsoft) e Linux portátil com persistência e partição DADOS.

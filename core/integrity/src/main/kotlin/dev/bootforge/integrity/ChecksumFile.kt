@@ -9,8 +9,8 @@ package dev.bootforge.integrity
  *  - BSD/Fedora:     `SHA256 (<arquivo>) = <hash>`
  *
  * Linhas de assinatura PGP (`-----BEGIN PGP ...`) e comentários são ignorados.
- * IMPORTANTE: ler o arquivo de checksum NÃO prova autenticidade; isso exige
- * verificar a assinatura digital do próprio arquivo de checksum (pendente).
+ * IMPORTANTE: ler o arquivo de checksum NÃO prova autenticidade; isso exige verificar a
+ * assinatura digital do próprio arquivo de checksum (feito no catálogo: feature/catalog/OpenPgp).
  */
 object ChecksumFile {
 

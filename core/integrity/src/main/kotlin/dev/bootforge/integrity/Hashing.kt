@@ -10,9 +10,16 @@ import java.security.MessageDigest
  * Usamos apenas algoritmos considerados seguros para checagem de arquivos
  * (SHA-256 e SHA-512), que são os publicados pelas distribuições oficiais.
  */
-enum class HashAlgorithm(val javaName: String, val hexLength: Int) {
+enum class HashAlgorithm(val javaName: String, val hexLength: Int, val label: String = javaName) {
+    // MD5 e SHA-1 servem só para CONFERIR checksums antigos publicados por alguns sites;
+    // não são seguros contra adulteração intencional (o app avisa).
+    MD5("MD5", 32),
+    SHA1("SHA-1", 40),
     SHA256("SHA-256", 64),
     SHA512("SHA-512", 128);
+
+    /** Resistente a adulteração intencional (MD5 e SHA-1 não são). */
+    val secure: Boolean get() = this == SHA256 || this == SHA512
 
     fun newDigest(): MessageDigest = MessageDigest.getInstance(javaName)
 

@@ -173,6 +173,23 @@ Use o pendrive com Ventoy do passo 4. Abra **Ventoy** na tela inicial — aparec
 | 44 | Reconecte e repita a gravação | Funciona normalmente |
 | 45 | Teste com **outros pendrives** (marcas e tamanhos diferentes) o que conseguir: inspecionar, teste de leitura, instalar Ventoy | Preencha a matriz em `docs/05-testes-e-estabilidade.md` |
 
+## Etapa 8 — Ferramentas (APK 0.7.0, passos 46 a 53)
+
+Use um pendrive **de teste** (as ferramentas marcadas "Apaga" apagam tudo). Tela inicial → **Ferramentas**.
+
+| Passo | O que fazer | Esperado |
+|---|---|---|
+| 46 | **Checksum** → *Arquivo do celular* → escolha uma ISO baixada → cole o SHA-256 do site oficial → *Calcular* | MD5, SHA-1, SHA-256 e SHA-512 aparecem; "SHA-256 confere" em verde. Mude 1 letra do valor colado e calcule de novo → "NÃO confere" |
+| 47 | Com um pendrive Ventoy: **Checksum** → selecione o pendrive → escolha uma ISO da lista *Imagens no pendrive Ventoy* | Mesmos valores calculados no PC (`certutil -hashfile arquivo.iso SHA256` no Windows) |
+| 48 | **Backup do pendrive** → selecione o pendrive → escolha onde salvar | Arquivo `pendrive-AAAAMMDD-HHMM.img.gz` criado, bem menor que o pendrive; SHA-256 no resultado. Cancele um segundo backup no meio → o arquivo incompleto some |
+| 49 | **Formatar** → exFAT, MBR, nome "TESTE" | "Pendrive formatado… Verificação concluída". No PC aparece a unidade **TESTE** vazia, sem erros |
+| 50 | Repita com **FAT32** e com **GPT** | Mesma coisa; PC/TV/som do carro reconhecem o FAT32 |
+| 51 | **Restaurar imagem** → escolha o `.img.gz` do passo 48 | "Restaurada e verificada"; o pendrive volta exatamente como estava (Ventoy/ISOs de volta) |
+| 52 | **Apagar com segurança** → *Rápido* | Termina em segundos; o PC pede para formatar o pendrive |
+| 53 | **Teste de superfície** (de preferência um pendrive pequeno, 4–16 GB) | Progresso em 2 fases (gravando / conferindo); resultado com capacidade real, velocidades médias e o mapa por região. Depois use *Formatar* |
+
+Se algo falhar: botão **Enviar log do erro** no painel da operação.
+
 ## Tabela de resultados
 
 | Item | Resultado (OK / falhou + mensagem) |
@@ -197,6 +214,12 @@ Use o pendrive com Ventoy do passo 4. Abra **Ventoy** na tela inicial — aparec
 | 25–26. Windows FAT32 (tempo: ___ min) + instalador abre | |
 | 27. Aviso em modo BIOS | |
 | 28–30. Editor: abrir, editar, desfazer | |
+| 46–47. Checksum (celular e pendrive Ventoy) | |
+| 48. Backup .img.gz (tamanho final: ___) | |
+| 49–50. Formatar exFAT/FAT32, MBR/GPT reconhecidos no PC | |
+| 51. Restaurar backup + verificação | |
+| 52. Apagar rápido | |
+| 53. Teste de superfície (tempo: ___; gravação ___ MB/s; leitura ___ MB/s) | |
 | 31–32. Nova ISO validada e iniciando no PC (tempo: ___ min) | |
 | 33. Extração | |
 | 34. Windows reconstruída + instalador abre | |

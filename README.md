@@ -7,7 +7,7 @@ via USB OTG, sem root e sem computador**.
 
 ![Telas do BootForge](docs/img/app-telas.png)
 
-> **Estado atual: 0.6.2 — as 7 etapas implementadas; falta o teste em celulares e pendrives reais para a 1.0.**
+> **Estado atual: 0.7.0 — Etapa 8 de 10 (ferramentas de pendrive e cartão). Etapas 1–7 validadas no celular real (Galaxy A16).**
 > Tudo validado em discos virtuais com boot real no QEMU (BIOS e UEFI) e comparado com as
 > ferramentas oficiais do Ventoy. **Ainda não testado em celular real** — veja o
 > [roteiro de testes](docs/ROTEIRO-TESTES-REAIS.md). Status completo em
@@ -45,6 +45,11 @@ via USB OTG, sem root e sem computador**.
 - 🔔 Operações longas em segundo plano com notificação de progresso.
 - 🪲 **Logs e diagnóstico**: log contínuo, relatório de travamentos e botão *Enviar log do erro* —
   o relatório (.txt) pode ser compartilhado pelo WhatsApp ou e-mail. Veja [docs/05-testes-e-estabilidade.md](docs/05-testes-e-estabilidade.md).
+- 🛠️ **Ferramentas de pendrive e cartão**: formatar (FAT32/exFAT, MBR/GPT) para voltar ao uso
+  normal; **teste completo de superfície** (setores ruins, capacidade real, mapa de velocidade por
+  região); **apagar com segurança** (rápido ou zeros em tudo, com conferência); **backup** do
+  pendrive inteiro em `.img.gz` e **restauração** com verificação; **checksum** MD5/SHA-1/SHA-256/SHA-512
+  de arquivos do celular ou das ISOs no pendrive Ventoy.
 - 🧪 Diagnóstico: teste de velocidade de leitura e gravação RAW de imagem com verificação SHA-256.
 - 🛡️ Confirmações fortes (digitar `APAGAR`, conferência quando há vários pendrives) e progresso real.
 - 📜 Histórico local de operações.
@@ -83,9 +88,10 @@ BootForge/
 │   ├── fs-exfat/           exFAT: formatar, ler, gravar, verificar
 │   ├── fs-ext/             ext2/ext3 (persistência)
 │   ├── iso/                ISO9660/Joliet/Rock Ridge/El Torito/UDF + identificação
-│   └── integrity/          SHA-256/512
+│   └── integrity/          MD5, SHA-1, SHA-256, SHA-512, log (Diag)
 ├── feature/iso-writer/     Etapa 3: análise da ISO e gravação (DD, Windows FAT32, extração)
 ├── feature/iso-editor/     Etapa 5: edição não destrutiva, reconstrução (ISO9660/Joliet/RR/UDF) e validação
+├── feature/media-tools/    Etapa 8: formatar, teste de superfície, apagar, backup/restauração, checksum
 ├── feature/catalog/        Etapa 6: catálogo (catalog.json), fontes oficiais, assinaturas, downloads, biblioteca
 ├── feature/ventoy-core/    instalar, detectar, atualizar, catálogo, temas, ferramentas, download
 ├── feature/ventoy-config/  ventoy.json: esquema oficial, validação, edição
