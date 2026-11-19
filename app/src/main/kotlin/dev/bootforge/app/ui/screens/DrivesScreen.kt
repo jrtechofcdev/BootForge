@@ -127,11 +127,24 @@ fun DriveDetailScreen(vm: AppViewModel, id: String, onBack: () -> Unit, onVentoy
             is InspectState.Ready -> {
                 // O seletor de arquivos do sistema (SAF) fica aqui, na camada ligada à Activity.
                 var pendingUri by remember { mutableStateOf<android.net.Uri?>(null) }
+                var confirmCapacity by remember { mutableStateOf(false) }
                 val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> pendingUri = uri }
                 DriveDetails(
                     s.report, drives.size, onVentoy,
                     onBenchmark = { vm.readBenchmark(s.report.info) },
                     onPickImage = { picker.launch(arrayOf("*/*")) },
+                    onCapacity = { confirmCapacity = true },
+                )
+                if (confirmCapacity) ConfirmWriteDialog(
+                    title = "Testar a capacidade real?",
+                    report = s.report,
+                    connectedDrives = drives.size,
+                    destructive = false,
+                    message = "Grava marcas em ~128 pontos do pendrive, confere e DEVOLVE o conteúdo original (seus dados ficam como estavam). " +
+                        "Leva menos de um minuto. Não remova o pendrive durante o teste.",
+                    confirmLabel = "Testar",
+                    onConfirm = { confirmCapacity = false; vm.capacityTest(s.report.info, s.report.capacityBytes) },
+                    onDismiss = { confirmCapacity = false },
                 )
                 pendingUri?.let { uri ->
                     ConfirmWriteDialog(
@@ -166,6 +179,7 @@ fun DriveDetails(
     onVentoy: () -> Unit,
     onBenchmark: () -> Unit,
     onPickImage: () -> Unit,
+    onCapacity: () -> Unit = {},
 ) {
     var showHex by remember { mutableStateOf(false) }
 
@@ -231,6 +245,7 @@ fun DriveDetails(
                 style = MaterialTheme.typography.bodySmall, color = BfColors.TextDim,
             )
             OutlinedButton(onClick = onBenchmark, modifier = Modifier.fillMaxWidth()) { Text("Teste de leitura (não altera nada)") }
+            OutlinedButton(onClick = onCapacity, modifier = Modifier.fillMaxWidth()) { Text("Testar capacidade real (detecta pendrive falsificado)") }
             Button(
                 onClick = onPickImage,
                 modifier = Modifier.fillMaxWidth(),

@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Usb
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -65,6 +66,7 @@ import kotlinx.coroutines.withContext
 class LogsActions(
     val onSave: () -> Unit = {}, val onShare: () -> Unit = {}, val onCopy: () -> Unit = {},
     val onClear: () -> Unit = {}, val onVerbose: (Boolean) -> Unit = {}, val onFilter: (Diag.Level?) -> Unit = {}, val onRefresh: () -> Unit = {},
+    val onTransferKb: (Int) -> Unit = {},
 )
 
 /** Tela "Logs e diagnóstico": ver, salvar, compartilhar e limpar o log (Etapa 7). */
@@ -78,6 +80,7 @@ fun LogsScreen(onBack: () -> Unit) {
     var verbose by remember { mutableStateOf(Diag.verbose) }
     var busy by remember { mutableStateOf<String?>(null) }
     var confirmClear by remember { mutableStateOf(false) }
+    var transferKb by remember { mutableIntStateOf(dev.bootforge.app.data.AppGraph.usbTransferKb) }
     val lines = remember(refresh, filter) { AppLog.recent().filter { filter == null || it.level >= filter!! }.takeLast(500).reversed() }
 
     val saveTo = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri: Uri? ->
@@ -93,7 +96,7 @@ fun LogsScreen(onBack: () -> Unit) {
     androidx.compose.foundation.layout.Column(Modifier.fillMaxSize()) {
         BfTopBar("Logs e diagnóstico", onBack, "Para enviar quando algo der errado")
         LogsContent(
-            lines, AppLog.totalBytes(), AppLog.allCrashReports().size, verbose, filter, busy,
+            lines, AppLog.totalBytes(), AppLog.allCrashReports().size, verbose, filter, busy, transferKb,
             LogsActions(
                 onSave = { saveTo.launch("bootforge-log-${java.text.SimpleDateFormat("yyyyMMdd-HHmm", java.util.Locale.US).format(java.util.Date())}.txt") },
                 onShare = {
@@ -117,6 +120,7 @@ fun LogsScreen(onBack: () -> Unit) {
                 onVerbose = { verbose = it; AppLog.setVerbose(app, it) },
                 onFilter = { filter = it },
                 onRefresh = { refresh++ },
+                onTransferKb = { transferKb = it; dev.bootforge.app.data.AppGraph.usbTransferKb = it },
             ),
         )
     }
@@ -124,7 +128,7 @@ fun LogsScreen(onBack: () -> Unit) {
 }
 
 @Composable
-fun LogsContent(lines: List<LogLine>, totalBytes: Long, crashes: Int, verbose: Boolean, filter: Diag.Level?, busy: String?, actions: LogsActions) {
+fun LogsContent(lines: List<LogLine>, totalBytes: Long, crashes: Int, verbose: Boolean, filter: Diag.Level?, busy: String?, transferKb: Int, actions: LogsActions) {
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         SectionCard(title = "Enviar relatório", icon = Icons.Filled.BugReport) {
             Text(
@@ -147,6 +151,18 @@ fun LogsContent(lines: List<LogLine>, totalBytes: Long, crashes: Int, verbose: B
                     Text("Registra cada comando enviado ao pendrive. Ligue só para reproduzir um erro (deixa a gravação mais lenta).", style = MaterialTheme.typography.bodySmall, color = BfColors.TextDim)
                 }
                 Switch(verbose, actions.onVerbose)
+            }
+        }
+        SectionCard(title = "Compatibilidade USB", icon = Icons.Filled.Usb) {
+            Text(
+                "Tamanho de cada comando enviado ao pendrive. O padrão (64 KB) funciona na maioria; se um pendrive falhar ou travar, " +
+                    "o app já reduz sozinho — escolha um valor menor aqui só se o erro continuar.",
+                style = MaterialTheme.typography.bodySmall, color = BfColors.TextDim,
+            )
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(64 to "64 KB (padrão)", 32 to "32 KB", 16 to "16 KB", 4 to "4 KB (mais lento)", 128 to "128 KB").forEach { (kb, label) ->
+                    FilterChip(transferKb == kb, { actions.onTransferKb(kb) }, label = { Text(label) })
+                }
             }
         }
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {

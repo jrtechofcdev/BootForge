@@ -5,6 +5,7 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbEndpoint
 import android.hardware.usb.UsbInterface
 import android.hardware.usb.UsbManager
+import dev.bootforge.blockdev.AdaptiveChunker
 import dev.bootforge.blockdev.BlockDevice
 import dev.bootforge.blockdev.ReadOnlyDeviceException
 import me.jahnen.libaums.core.driver.scsi.ScsiBlockDevice
@@ -31,8 +32,9 @@ import java.nio.ByteBuffer
  */
 class UsbBlockDevice private constructor(
     private val communication: UsbCommunication,
-    private val driver: ScsiBlockDevice,
+    private var driver: ScsiBlockDevice,
     override val isReadOnly: Boolean,
+    transferBytes: Int,
 ) : BlockDevice {
 
     override val blockSize: Int = driver.blockSize
@@ -41,46 +43,62 @@ class UsbBlockDevice private constructor(
     @Volatile
     private var closed = false
 
+    /** Comandos de tamanho adaptável (64 KB por padrão; diminui sozinho se o pendrive recusar). */
+    private val chunker = AdaptiveChunker(transferBytes, blockSize)
+
+    /** Tamanho atual de cada comando USB (para o log e a tela de diagnóstico). */
+    val currentTransferBytes: Int get() = chunker.chunkBytes
+
     init {
         if (blockSize <= 0 || blockCount <= 0) {
             close()
             throw IOException("Capacidade inválida informada pelo dispositivo (setor=$blockSize, setores=$blockCount). Dispositivos acima de 1 TiB ainda não são suportados.")
         }
+        Diag.i("USB", "Tamanho de cada comando USB: ${chunker.chunkBytes / 1024} KB")
     }
 
     override fun read(lba: Long, buffer: ByteArray, offset: Int, length: Int) {
         check(lba, length)
-        var done = 0
-        while (done < length) {
-            val n = minOf(MAX_TRANSFER, length - done)
-            val at = lba + done / blockSize
+        chunker.run(lba, length, { at, off, n ->
             Diag.d("SCSI") { "READ(10) LBA $at, ${n / blockSize} setores" }
             try {
-                driver.read(at, ByteBuffer.wrap(buffer, offset + done, n))
+                driver.read(at, ByteBuffer.wrap(buffer, offset + off, n))
             } catch (e: Exception) {
                 Diag.e("SCSI", "Falha de LEITURA no LBA $at (${n / blockSize} setores)", e)
                 throw if (e is IOException) e else IOException("Falha de leitura no setor $at: ${e.message}", e)
             }
-            done += n
-        }
+        }, ::recover, ::shrunk)
     }
 
     override fun write(lba: Long, buffer: ByteArray, offset: Int, length: Int) {
         if (isReadOnly) throw ReadOnlyDeviceException()
         check(lba, length)
-        var done = 0
-        while (done < length) {
-            val n = minOf(MAX_TRANSFER, length - done)
-            val at = lba + done / blockSize
+        chunker.run(lba, length, { at, off, n ->
             Diag.d("SCSI") { "WRITE(10) LBA $at, ${n / blockSize} setores" }
             try {
-                driver.write(at, ByteBuffer.wrap(buffer, offset + done, n))
+                driver.write(at, ByteBuffer.wrap(buffer, offset + off, n))
             } catch (e: Exception) {
                 Diag.e("SCSI", "Falha de GRAVAÇÃO no LBA $at (${n / blockSize} setores)", e)
                 throw if (e is IOException) e else IOException("Falha de gravação no setor $at: ${e.message}", e)
             }
-            done += n
-        }
+        }, ::recover, ::shrunk)
+    }
+
+    /** Reinicia a porta USB e o protocolo do pendrive, sem precisar desconectar. */
+    private fun recover() {
+        if (closed) throw IOException("Dispositivo USB desconectado ou fechado")
+        Diag.w("USB", "Recuperando a comunicação (reinício da porta USB)…")
+        runCatching { communication.resetDevice() }.onFailure { Diag.w("USB", "Reinício da porta USB não aceito: ${it.message}") }
+        Thread.sleep(500)
+        val d = ScsiBlockDevice(communication, 0)
+        d.init()
+        if (d.blockSize != blockSize || d.blocks != blockCount) throw IOException("O pendrive respondeu com outra capacidade depois de reiniciar: operação interrompida por segurança")
+        driver = d
+        Diag.i("USB", "Comunicação recuperada")
+    }
+
+    private fun shrunk(bytes: Int, cause: Throwable) {
+        Diag.w("USB", "O pendrive recusou comandos maiores; reduzindo para ${bytes / 1024} KB por comando (${cause.message})")
     }
 
     private fun check(lba: Long, length: Int) {
@@ -103,9 +121,6 @@ class UsbBlockDevice private constructor(
     }
 
     companion object {
-        /** Até 1 MiB por comando SCSI (o READ(10)/WRITE(10) aceita no máximo 65535 blocos). */
-        private const val MAX_TRANSFER = 1 shl 20
-
         /** Classe/subclasse/protocolo de um pendrive: Mass Storage / SCSI transparente / Bulk-Only. */
         fun findMassStorageInterface(device: UsbDevice): UsbInterface? =
             (0 until device.interfaceCount).map(device::getInterface).firstOrNull {
@@ -117,7 +132,7 @@ class UsbBlockDevice private constructor(
          * Abre o pendrive. Requer que o usuário já tenha concedido a permissão USB.
          * @throws IOException se o dispositivo não responder ou não for um pendrive compatível.
          */
-        fun open(usbManager: UsbManager, device: UsbDevice, readOnly: Boolean): UsbBlockDevice {
+        fun open(usbManager: UsbManager, device: UsbDevice, readOnly: Boolean, transferBytes: Int = AdaptiveChunker.DEFAULT_BYTES): UsbBlockDevice {
             if (!usbManager.hasPermission(device)) throw SecurityException("Permissão USB não concedida para ${device.deviceName}")
             val iface = findMassStorageInterface(device) ?: throw IOException("O dispositivo não é um armazenamento USB (Mass Storage Bulk-Only)")
             var inEp: UsbEndpoint? = null
@@ -131,9 +146,21 @@ class UsbBlockDevice private constructor(
             if (inEp == null || outEp == null) throw IOException("Endpoints bulk não encontrados")
             val comm = UsbCommunicationFactory.createUsbCommunication(usbManager, device, iface, outEp, inEp)
             try {
-                val driver = ScsiBlockDevice(comm, 0)
-                driver.init() // INQUIRY + TEST UNIT READY + READ CAPACITY
-                return UsbBlockDevice(comm, driver, readOnly)
+                val driver = try {
+                    ScsiBlockDevice(comm, 0).also { it.init() } // INQUIRY + TEST UNIT READY + READ CAPACITY
+                } catch (first: Exception) {
+                    // pendrive "travado" por uma falha anterior: reinicia a porta USB e tenta mais uma vez
+                    Diag.w("USB", "O pendrive não respondeu ao abrir; reiniciando a porta USB e tentando de novo (${first.message})")
+                    runCatching { comm.resetDevice() }
+                    Thread.sleep(800)
+                    try {
+                        ScsiBlockDevice(comm, 0).also { it.init() }
+                    } catch (second: Exception) {
+                        second.addSuppressed(first)
+                        throw IOException("O pendrive não respondeu. Desconecte e conecte de novo (de preferência sem hub/extensão) e tente outra vez.", second)
+                    }
+                }
+                return UsbBlockDevice(comm, driver, readOnly, transferBytes)
             } catch (e: Exception) {
                 runCatching { comm.close() }
                 throw if (e is IOException) e else IOException("Falha ao inicializar o pendrive: ${e.message}", e)

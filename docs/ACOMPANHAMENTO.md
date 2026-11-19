@@ -1,6 +1,6 @@
 # Documento de acompanhamento — BootForge
 
-Última atualização: 18/11/2026 · Versão do app: **0.6.0**
+Última atualização: 18/11/2026 · Versão do app: **0.6.1**
 
 Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular real · 🟡 pendente · ⛔ limitação técnica
 
@@ -44,6 +44,8 @@ Legenda: ✅ implementado e testado · 🧪 implementado, falta teste em celular
 | **Downloads**: retomada (Range/If-Range), retomada automática após queda, pausa (inclusive fechando o app), cancelamento, tamanho e checksum conferidos, arquivo adulterado apagado | ✅ | Servidor local simulando quedas, arquivo alterado, Range ignorado; **download real do Alpine com pausa/retomada e SHA-512 conferido** |
 | Biblioteca de imagens (reutilizar sem baixar de novo) e verificação de ISO baixada pelo navegador | ✅ | Testes |
 | Catálogo atualizável sem reconstruir o app (`catalog.json` validado) | ✅ | Testes de catálogo inválido |
+| **Comandos USB adaptáveis** (64 KB, redução automática com reinício da porta USB, recuperação ao abrir, ajuste manual) — correção do 1º teste real | ✅ / 🧪 | Pendrive do log simulado (`AdaptiveChunkerTest`); **retestar no Galaxy A16** |
+| **Teste de capacidade real** (pendrive falsificado), sem apagar dados | ✅ / 🧪 | Falsos simulados (capacidade exata) e verdadeiro (nenhum byte alterado) |
 | **Estabilidade (injeção de falhas)**: pendrive arrancado no meio da instalação/atualização do Ventoy, da cópia para o exFAT, da gravação DD/FAT32; destino cheio no editor; ISO cortada; falta de espaço no download | ✅ | `FaultInjectingBlockDevice` + testes em 4 módulos ([05-testes-e-estabilidade.md](05-testes-e-estabilidade.md)) |
 | Pendrive falsificado (devolve outro conteúdo) detectado pela verificação | ✅ | Teste "pendrive que mente" |
 | Ventoy: instalar (MBR/GPT, 4K, reserva, **com ou sem Secure Boot**), detectar, atualizar | ✅ | Boot QEMU BIOS/UEFI; comparação com o instalador oficial |
@@ -114,7 +116,8 @@ Ver [`03-arquitetura.md`](03-arquitetura.md#dependências) e [`THIRD_PARTY_LICEN
 
 | Teste | Resultado |
 |---|---|
-| `./gradlew test` + capturas — **121 execuções** (99 testes + 11 capturas × 2) | ✅ 0 falhas |
+| `./gradlew test` + capturas — **127 execuções** | ✅ 0 falhas |
+| **Celular real — Samsung Galaxy A16 (Android 16), 19/11/2026** | ❌ na 0.6.0 (comandos de 1 MB recusados); corrigido na 0.6.1 — aguardando reteste |
 | Etapa 6 ao vivo: 14 fontes consultadas; Ubuntu, Debian e Mint com assinatura válida; download real do Alpine pausado, retomado e verificado | ✅ (`BOOTFORGE_LIVE=1`) |
 | Etapa 5 no QEMU: Alpine editado (Preservar) como pendrive e CD em BIOS e UEFI; boot completo até o login; reconstrução completa como CD até o login; imagem de boot realocada iniciando pelo MBR GRUB2 e pelo El Torito | ✅ (`docs/img/e5-*.png`) |
 | Etapa 5: ISO UDF reconstruída montada pelo driver UDF do kernel Linux (SHA-256 de 246 arquivos; diferenças só nas edições) | ✅ (`docs/img/e5-udf-linux-kernel.log`) |
@@ -134,6 +137,7 @@ Ver [`03-arquitetura.md`](03-arquitetura.md#dependências) e [`THIRD_PARTY_LICEN
 
 | Problema | Solução |
 |---|---|
+| **1º teste real (Galaxy A16, Android 16):** pendrive 3207:0300 recusava comandos de 1 MB e travava | 64 KB por comando + redução automática + recuperação sem desconectar (0.6.1). Diagnóstico feito pelo relatório de log |
 | No exFAT, erro ao finalizar escondia o erro original (pendrive arrancado) | Erro original mantido; o da finalização vai como "suprimido" |
 | Download começava mesmo sem espaço e falhava no meio | Verificação de espaço livre antes de começar, com mensagem "faltam X MB" |
 | Destaques com asteriscos apareciam literalmente nas telas | Negrito de verdade (`BoldLead`) |
@@ -155,6 +159,6 @@ Ver [`03-arquitetura.md`](03-arquitetura.md#dependências) e [`THIRD_PARTY_LICEN
 
 ## 7. Próximas etapas
 
-1. **Você:** testar o APK 0.6.0 seguindo o [roteiro](ROTEIRO-TESTES-REAIS.md); a cada erro, enviar o **relatório de log**.
+1. **Você:** testar o APK 0.6.1 (seção "Reteste da 0.6.1" do [roteiro](ROTEIRO-TESTES-REAIS.md)) e enviar o **relatório de log**.
 2. Corrigir o que aparecer no hardware real e preencher a matriz de compatibilidade.
 3. Com os testes reais aprovados: versão **1.0.0**.

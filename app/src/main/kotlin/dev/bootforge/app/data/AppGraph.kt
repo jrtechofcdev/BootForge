@@ -18,7 +18,25 @@ object AppGraph {
         app = application
     }
 
-    val drives: UsbDriveManager by lazy { UsbDriveManager(app).also { it.start() } }
+    val drives: UsbDriveManager by lazy {
+        UsbDriveManager(app).also {
+            it.transferBytes = usbTransferKb * 1024
+            it.start()
+        }
+    }
+
+    /**
+     * Tamanho de cada comando USB em KB (Logs e diagnóstico → Compatibilidade USB).
+     * Padrão 64 KB; menor = mais compatível com pendrives problemáticos, porém mais lento.
+     */
+    var usbTransferKb: Int
+        get() = app.getSharedPreferences("usb", 0).getInt("transferKb", 64)
+        set(v) {
+            app.getSharedPreferences("usb", 0).edit().putInt("transferKb", v).apply()
+            drives.transferBytes = v * 1024
+            session.close() // a próxima abertura do pendrive já usa o novo tamanho
+            dev.bootforge.integrity.Diag.i("USB", "Tamanho do comando USB alterado para $v KB")
+        }
     val history: HistoryRepository by lazy { HistoryRepository(app) }
     val session: DriveSession by lazy { DriveSession(drives) }
     val operations: OperationRunner by lazy { OperationRunner(app, history) }

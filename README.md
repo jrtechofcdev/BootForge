@@ -7,7 +7,7 @@ via USB OTG, sem root e sem computador**.
 
 ![Telas do BootForge](docs/img/app-telas.png)
 
-> **Estado atual: 0.6.0 — as 7 etapas implementadas; falta o teste em celulares e pendrives reais para a 1.0.**
+> **Estado atual: 0.6.1 — as 7 etapas implementadas; falta o teste em celulares e pendrives reais para a 1.0.**
 > Tudo validado em discos virtuais com boot real no QEMU (BIOS e UEFI) e comparado com as
 > ferramentas oficiais do Ventoy. **Ainda não testado em celular real** — veja o
 > [roteiro de testes](docs/ROTEIRO-TESTES-REAIS.md). Status completo em

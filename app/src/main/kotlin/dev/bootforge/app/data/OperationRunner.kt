@@ -90,7 +90,9 @@ class OperationRunner(private val app: Application, private val history: History
                 OperationState.Status.CANCELLED to "Operação cancelada. O que já tinha sido concluído foi mantido; o item em andamento foi descartado."
             } catch (e: Throwable) {
                 val reason = when (e) {
-                    is IOException -> "Falha de leitura/gravação ou pendrive desconectado: ${e.message}"
+                    is IOException -> if (e.message?.contains("MAX_RECOVERY_ATTEMPTS") == true)
+                        "O pendrive parou de responder ao comando USB. Desconecte e conecte o pendrive de novo e tente outra vez; se repetir, envie o log."
+                    else "Falha de leitura/gravação ou pendrive desconectado: ${e.message}"
                     is SecurityException -> "Sem permissão de acesso ao USB: ${e.message}"
                     is OutOfMemoryError -> "Memória insuficiente no aparelho"
                     else -> e.message ?: e.javaClass.simpleName

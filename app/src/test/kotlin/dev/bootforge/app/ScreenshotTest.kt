@@ -213,7 +213,7 @@ class ScreenshotTest {
             LogLine(t + 61_050, Diag.Level.ERROR, "SCSI", "Falha de GRAVAÇÃO no LBA 1048576 (2048 setores)\njava.io.IOException: Could not write to device, result == -1 errno 19 No such device"),
             LogLine(t + 61_100, Diag.Level.ERROR, "Operação", "FALHOU: Gravar ISO: debian-13.7.0-amd64-netinst.iso — Falha de leitura/gravação ou pendrive desconectado (progresso: 536870912/792723456 bytes, etapa: Imagem direta (DD))"),
         ).reversed()
-        paparazzi.snapshot { Screen { LogsContent(lines, 184_320, 0, false, null, null, LogsActions()) } }
+        paparazzi.snapshot { Screen { LogsContent(lines, 184_320, 0, false, null, null, 64, LogsActions()) } }
     }
 
     @Test

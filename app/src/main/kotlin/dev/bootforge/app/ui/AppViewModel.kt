@@ -10,6 +10,8 @@ import dev.bootforge.app.data.Format
 import dev.bootforge.app.data.OperationState
 import dev.bootforge.blockdev.BlockDevice
 import dev.bootforge.blockdev.BlockTransfer
+import dev.bootforge.blockdev.CapacityTest
+import dev.bootforge.integrity.Diag
 import dev.bootforge.blockdev.ProgressListener
 import dev.bootforge.blockdev.ProgressTracker
 import dev.bootforge.blockdev.readBlocks
@@ -157,6 +159,27 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             }
             val secs = (System.nanoTime() - start) / 1e9
             "Leitura de ${Format.bytes(done)} concluída em ${"%.1f".format(secs)} s (${Format.speed(done / secs)})."
+        }
+    }
+
+    /**
+     * Teste de capacidade real (pendrive falsificado). Não apaga dados: grava marcas em pontos
+     * espalhados, confere e devolve o conteúdo original. Ver [dev.bootforge.blockdev.CapacityTest].
+     */
+    fun capacityTest(info: UsbDriveInfo, confirmedSize: Long) = ops.run("Teste de capacidade real", info.displayName, info.deviceName) { cancel, obs ->
+        session.withDevice(info.deviceName) { dev ->
+            if (dev.sizeBytes != confirmedSize) throw IllegalStateException("O pendrive conectado não é o mesmo que foi confirmado")
+            obs.step("Gravando e conferindo marcas em pontos do pendrive", 0, 1)
+            val r = CapacityTest.run(dev, listener = { obs.onProgress(it) }, cancel = cancel)
+            obs.onLog("Pontos testados: ${r.points}; com falha: ${r.badPoints}; conteúdo original devolvido: ${if (r.restored) "sim" else "NÃO"}")
+            Diag.i("Capacidade", "Anunciada ${r.declaredBytes} bytes; real estimada ${r.realBytesEstimate}; falhas ${r.badPoints}/${r.points}; volta=${r.wraps}; restaurado=${r.restored}")
+            if (!r.restored) throw IOException("Não foi possível devolver o conteúdo original de alguns pontos: o pendrive apresenta defeito.")
+            if (r.genuine) "Capacidade real confirmada: ${Format.bytes(r.declaredBytes)} (${r.points} pontos conferidos de ponta a ponta). Seus dados foram preservados."
+            else throw IOException(
+                "PENDRIVE COM CAPACIDADE FALSA: anuncia ${Format.bytes(r.declaredBytes)}, mas só cerca de ${Format.bytes(r.realBytesEstimate)} funcionam de verdade " +
+                    "(${r.badPoints} de ${r.points} pontos falharam${if (r.wraps) "; gravar além disso sobrescreve o começo" else ""}). " +
+                    "Não use para guardar arquivos nem para o Ventoy. Os dados que estavam nele foram devolvidos onde a memória é real.",
+            )
         }
     }
 

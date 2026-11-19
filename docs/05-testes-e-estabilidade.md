@@ -83,8 +83,39 @@ relatório gerado em **Logs**.
 
 | Celular / Android | Pendrive (marca, GB, USB 2/3) | Ventoy (instalar/atualizar) | Gravar Linux (DD) | Gravar Windows (FAT32) | Editor | Download | Observações |
 |---|---|---|---|---|---|---|---|
+| Samsung Galaxy A16 (SM-A165M) · Android 16 — app 0.6.0 (19/11/2026) | Genérico VID:PID 3207:0300, "816820090226", anuncia 64 GB | ❌ falhou na 1ª gravação | ❌ falhou na 1ª gravação | — | — | — | Detecção, permissão e leitura de 1 setor OK. **Todo comando de 1 MB recusado** (bulkTransfer −1) e o pendrive travava até ser reconectado. Corrigido na 0.6.1 (ver seção 7). Retestar. |
 | | | | | | | | |
-| | | | | | | | |
+
+## 7. Primeiro teste real (19/11/2026) — diagnóstico pelo log
+
+O relatório de log enviado mostrou:
+
+- Leituras de **1 setor** (512 bytes) funcionavam: o app leu as tabelas de partição normalmente.
+- O **primeiro comando de 1 MB** (gravação da instalação do Ventoy, da gravação DD e, no dia 18, da
+  leitura do teste de velocidade) falhava em menos de 1 segundo com `bulkTransfer = -1`; a
+  biblioteca USB tentava se recuperar, desistia ("MAX_RECOVERY_ATTEMPTS") e o pendrive só voltava a
+  responder depois de desconectado.
+- O pendrive se identifica como "SPC versão 0" (controlador muito simples) e tem nome genérico.
+
+**Causa:** o BootForge 0.6.0 enviava 1 MB por comando USB; Windows e Linux usam 64–120 KB, e
+controladores simples não aceitam comandos maiores.
+
+**Correção (0.6.1):**
+
+| Mudança | Detalhe |
+|---|---|
+| 64 KB por comando (padrão) | Igual ao Windows; `AdaptiveChunker` |
+| Redução automática | Se um comando falhar: reinicia a porta USB e o protocolo do pendrive, reduz pela metade (até 4 KB) e repete o mesmo trecho — sem precisar desconectar |
+| Recuperação ao abrir | Pendrive "travado" por uma falha anterior: reinício da porta USB e nova tentativa |
+| Ajuste manual | Logs → *Compatibilidade USB* (64/32/16/4/128 KB) |
+| Mensagem clara | "O pendrive parou de responder…" no lugar do erro técnico em inglês |
+| **Teste de capacidade real** | Pendrives → detalhes → *Testar capacidade real*: grava marcas em ~128 pontos (espaçados em potências de 2), confere e devolve o conteúdo original. Detecta pendrive falsificado e calcula a capacidade real |
+
+Testes automáticos novos: o pendrive do log foi simulado (recusa comandos grandes e trava até
+reiniciar) — com 64 KB funciona sem recuperação; um pendrive ainda mais limitado (16 KB) é
+recuperado sozinho e os dados ficam corretos. O teste de capacidade foi validado com pendrives
+falsos simulados ("dá a volta" → capacidade exata; "joga fora" → detectado) e com um verdadeiro
+(nenhum byte alterado).
 
 ## 6. Limitações conhecidas
 

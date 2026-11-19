@@ -49,6 +49,13 @@ class UsbDriveManager(context: Context) {
 
     private var registered = false
 
+    /**
+     * Tamanho de cada comando USB (bytes). Padrão 64 KB, como no Windows/Linux; o app permite
+     * reduzir em "Logs e diagnóstico" para pendrives problemáticos. Também diminui sozinho.
+     */
+    @Volatile
+    var transferBytes: Int = dev.bootforge.blockdev.AdaptiveChunker.DEFAULT_BYTES
+
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             @Suppress("DEPRECATION")
@@ -127,7 +134,7 @@ class UsbDriveManager(context: Context) {
         val info = describe(device)
         Diag.i("USB", "Abrindo ${"%04X:%04X".format(device.vendorId, device.productId)} \"${info.displayName}\" série ${Diag.mask(info.serial)} ${if (readOnly) "(somente leitura)" else "(leitura e escrita)"}")
         return try {
-            UsbBlockDevice.open(usbManager, device, readOnly).also { d ->
+            UsbBlockDevice.open(usbManager, device, readOnly, transferBytes).also { d ->
                 Diag.i("USB", "Pronto: setor ${d.blockSize} bytes × ${d.blockCount} setores = ${d.blockCount * d.blockSize} bytes")
             }
         } catch (e: Exception) {
